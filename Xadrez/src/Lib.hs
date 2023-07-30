@@ -1,4 +1,6 @@
-module Main (main) where
+module Lib
+    ( someFunc
+    ) where
 
 data Piece = King | Queen | Rook | Bishop | Knight | Pawn deriving (Show)
 data Color = Black | White deriving (Show)
@@ -41,6 +43,6 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
 
-main :: IO ()
-main = renderBoard initialBoard
 
+someFunc :: IO ()
+someFunc = renderBoard initialBoard
