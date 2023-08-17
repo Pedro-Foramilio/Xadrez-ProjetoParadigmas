@@ -2,11 +2,17 @@ module Lib
     ( someFunc
     ) where
 
-data Piece = King | Queen | Rook | Bishop | Knight | Pawn deriving (Show)
-data Color = Black | White deriving (Show)
-data Square = Empty | Occupied Color Piece deriving (Show)
-type Board = [[Square]]
+import TiposBase
 
+-- 1. Coletar Input do Usuario: devolver Posicao ini Posicao fin
+-- 2.1 Validar o movimento da peca (origem x destino)
+-- 2.2 Validar Excecoes (ROque, Cheque, Cheque Mate, En Passan)
+-- 3.1 Atualizar o tabuleiro de acordo
+-- 3.2 Retornar erro e pedir input novamente -> 2.
+-- 4. Atualizar estado para sinalizar movimento do proximo jogador
+
+
+{--
 initialBoard :: Board
 initialBoard =
   [ [ Occupied Black Rook, Occupied Black Knight, Occupied Black Bishop, Occupied Black Queen, Occupied Black King, Occupied Black Bishop, Occupied Black Knight, Occupied Black Rook ]
@@ -24,7 +30,7 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
   where
     renderSquare :: Square -> [Char]
     renderSquare Empty                      = "-"
-    renderSquare (Occupied color piece)     = renderPiece color piece
+    renderSquare (Occupied piece)     = renderPiece color piece
 
     renderPiece :: Color -> Piece -> [Char]
     renderPiece Black King     = "♚"
@@ -46,3 +52,7 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
 
 someFunc :: IO ()
 someFunc = renderBoard initialBoard
+--}
+
+someFunc :: IO ()
+someFunc = print "oi"
