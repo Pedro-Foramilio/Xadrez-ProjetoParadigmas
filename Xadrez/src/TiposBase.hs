@@ -3,12 +3,12 @@ module TiposBase( Piece(..), Color(..), Square(..), Board(..), validaMovimento )
 data PieceState = Piece Bool
 
 data Piece = King Color | Queen Color | Rook Color
-            | Bishop Color | Knight Color | Pawn Color deriving (Show)
+            | Bishop Color | Knight Color | Pawn Color deriving (Eq, Show)
 
 
-data Color = Black | White deriving (Show)
+data Color = Black | White deriving (Eq, Show)
 data Position = Position Char Int
-data Square = Empty | Occupied Piece deriving (Show)
+data Square = Empty | Occupied Piece deriving (Eq, Show)
 type Board = [[Square]]
 
 validaMovimento :: Piece -> Position -> Position -> Bool
