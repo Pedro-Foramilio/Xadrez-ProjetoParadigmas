@@ -1,4 +1,6 @@
-module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..), validaMovimento ) where
+module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
+    ,validaMovimento, getSquare, getPiece, geraCaminho, validaInterposicao ) where
+
 import Prelude
 
 data PieceState = Piece Bool
@@ -6,9 +8,8 @@ data PieceState = Piece Bool
 data Piece = King Color | Queen Color | Rook Color
             | Bishop Color | Knight Color | Pawn Color deriving (Eq, Show)
 
-
 data Color = Black | White deriving (Eq, Show)
-data Position = Position Char Int deriving (Show)
+data Position = Position Char Int deriving (Eq, Show)
 data Square = Empty | Occupied Piece deriving (Eq, Show)
 type Board = [[Square]]
 
@@ -23,9 +24,85 @@ converteColunaEmInt 'G' = 7
 converteColunaEmInt 'H' = 8
 converteColunaEmInt _ = -1
 
+converteIntEmColuna :: Int -> Char
+converteIntEmColuna 1 = 'A'
+converteIntEmColuna 2 = 'B'
+converteIntEmColuna 3 = 'C'
+converteIntEmColuna 4 = 'D'
+converteIntEmColuna 5 = 'E'
+converteIntEmColuna 6 = 'F'
+converteIntEmColuna 7 = 'G'
+converteIntEmColuna 8 = 'H'
+converteIntEmColuna _ = '-'
+
 isInBoard :: Position -> Bool
 isInBoard (Position i y) =  x >= 1 && x <= 8 && y >= 1 && y <= 8 
     where x = converteColunaEmInt i
+
+getSquare :: Board -> Position -> Square
+getSquare board (Position charr y) = board !! (8 - y) !! x 
+    where x = converteColunaEmInt charr - 1
+
+getPiece :: Square -> Piece
+getPiece (Occupied piece) = piece
+
+geraMovimentos :: Piece -> Position -> [Position]
+geraMovimentos (Pawn cor)   p = geraMovimentosPeao p cor
+geraMovimentos (Knight _)   p = geraMovimentosCavalo p
+geraMovimentos (Bishop _)   p = geraMovimentosBispo p
+geraMovimentos (Rook _)     p = geraMovimentosTorre p
+geraMovimentos (Queen _)    p = geraMovimentosRainha p
+geraMovimentos (King _)     p = geraMovimentosRei p
+
+-- TODO? considerar captura diagnoal??
+geraMovimentosPeao :: Position -> Color -> [Position]
+geraMovimentosPeao (Position charr y) cor 
+    = filter isInBoard movimentos
+    where movimentos = case cor of
+                            White -> case y of
+                                        2 -> [Position charr (y+1), Position charr (y+2)]
+                                        _ -> [Position charr (y+1)]
+                            Black -> case y of
+                                        7 -> [Position charr (y-1), Position charr (y-2)]
+                                        _ -> [Position charr (y-1)] 
+
+geraMovimentosCavalo :: Position -> [Position]
+geraMovimentosCavalo (Position charr y')
+    = filter isInBoard movimentos
+    where 
+        x' = converteColunaEmInt charr
+        offsets = [ (2, -1),  (2, 1),
+                    (1, -2),  (1, 2),
+                    (-1, -2), (-1, 2),
+                    (-2, -1), (-2, 1)]
+        movimentos = map (\(x, y) -> Position (converteIntEmColuna (x+x')) (y+y')) offsets
+
+geraMovimentosBispo :: Position -> [Position]
+geraMovimentosBispo (Position charr y1) = filter isInBoard movimentos
+    where
+        x1 = converteColunaEmInt charr
+        offsets = [(x, x) | x <- [-7..7], x /= 0] ++ [(-x, x) | x <- [-7..7], x /= 0]
+        movimentos = map (\(x, y) -> Position (converteIntEmColuna (x1 + x)) (y1 + y)) offsets                       
+
+geraMovimentosTorre :: Position -> [Position]
+geraMovimentosTorre (Position charr y1) = filter isInBoard movimentos
+    where
+        x1 = converteColunaEmInt charr
+        offsets = [(x, 0) | x <- [-7..7], x /= 0] ++ [(0, x) | x <- [-7..7], x /= 0]
+        movimentos = map (\(x, y) -> Position (converteIntEmColuna (x1 + x)) (y1 + y)) offsets
+
+geraMovimentosRainha :: Position -> [Position]
+geraMovimentosRainha p = geraMovimentosBispo p ++ geraMovimentosTorre p
+
+geraMovimentosRei :: Position -> [Position]
+geraMovimentosRei (Position charr y1) = filter isInBoard movimentos
+    where
+        x1 = converteColunaEmInt charr
+        offsets = [(-1,  1), (0,  1), (1,  1),
+                     (-1,  0),          (1,  0),
+                     (-1, -1), (0, -1), (1, -1) 
+                    ]
+        movimentos = map (\(x, y) -> Position (converteIntEmColuna (x1 + x)) (y1 + y)) offsets
 
 validaMovimento :: Piece -> Position -> Position -> Bool
 validaMovimento (Pawn cor) p1 p2 = isInBoard p2 && validaPeao cor p1 p2
@@ -36,61 +113,74 @@ validaMovimento (Queen _)  p1 p2 = isInBoard p2 && validaRainha p1 p2
 validaMovimento (King _)   p1 p2 = isInBoard p2 && validaRei p1 p2
 
 validaPeao :: Color -> Position -> Position -> Bool
-validaPeao cor (Position char1 y1) (Position char2 y2) 
-    | x1 == -1 || x2 == -1 = False
-    | otherwise = case cor of
-                    White -> if y1 == 2
-                                then x2 == x1 && (y2 == 3 || y2 == 4)
-                                else x2 == x1 && y2 == (y1 + 1)
-                    Black -> if y1 == 7
-                                then x2 == x1 && (y2 == 6 || y2 == 5)
-                                else x2 == x1 && y2 == (y1-1)
-    where x1 = converteColunaEmInt char1
-          x2 = converteColunaEmInt char2
+validaPeao cor p1 p2 = p2 `elem` geraMovimentosPeao p1 cor
 
 validaCavalo :: Position -> Position -> Bool
-validaCavalo (Position char1 y1) (Position char2 y2) 
-    = (converteColunaEmInt char2, y2) `elem` movimentosPossiveis
-    where
-        offsets = [ (2, -1),  (2, 1),
-                      (1, -2),  (1, 2),
-                     (-1, -2), (-1, 2),
-                     (-2, -1), (-2, 1)]
-        x1 = converteColunaEmInt char1
-        movimentos = map (\(x, y) -> (x + x1, y + y1)) offsets
-        movimentosPossiveis = filter 
-                                    (\(x, y) -> x >= 1 && x <=8 && y >= 1 && y <= 8)
-                                    movimentos
+validaCavalo p1 p2 = p2 `elem` geraMovimentosCavalo p1
 
 validaBispo :: Position -> Position -> Bool
-validaBispo (Position char1 y1) (Position char2 y2)
-    = (x2, y2) `elem` movimentosPossiveis
+validaBispo p1 p2 = p2 `elem` geraMovimentosBispo p1
+
+validaTorre :: Position -> Position -> Bool
+validaTorre p1 p2 = p2 `elem` geraMovimentosTorre p1
+          
+validaRainha :: Position -> Position -> Bool
+validaRainha p1 p2 = p2 `elem` geraMovimentosRainha p1
+
+validaRei :: Position -> Position -> Bool
+validaRei p1 p2 = p2 `elem` geraMovimentosRei p1
+
+
+validaInterposicao :: Board -> Position -> Position -> Bool
+validaInterposicao board p1 p2 = caminhoFiltrado == [p1, p2] || caminhoFiltrado == [p2, p1] 
+    where 
+        pecaInicial = getPiece $ getSquare board p1
+        caminho = geraCaminho pecaInicial p1 p2
+        caminhoFiltrado' = filter
+                            (\pos -> getSquare board pos /= Empty) 
+                            caminho
+        caminhoFiltrado =
+            if p2 `elem` caminhoFiltrado'
+                then caminhoFiltrado'
+            else
+                caminhoFiltrado' ++ [p2]
+
+geraCaminho :: Piece -> Position -> Position -> [Position]
+geraCaminho (Bishop _) = caminhoBispo
+geraCaminho (Rook   _) = caminhoTorre
+geraCaminho (Queen  _) = caminhoRainha
+geraCaminho (King   _) = caminhoRei
+
+caminhoBispo :: Position -> Position -> [Position]
+caminhoBispo (Position char1 y1) (Position char2 y2) = 
+    [Position (converteIntEmColuna x) y |
+                  x <- [min x1 x2 .. max x1 x2]
+                , y <- [min y1 y2 .. max y1 y2]
+                , abs (x - x1) == abs (y - y1)]
     where
         x1 = converteColunaEmInt char1
         x2 = converteColunaEmInt char2
-        offsets = [(x, x) | x <- [-7..7], x /= 0] ++ [(-x, x) | x <- [-7..7], x /= 0]
-        movimentos = map (\(x, y) -> (x1 + x, y1 + y)) offsets                       
-        movimentosPossiveis = filter 
-                                (\(x, y) -> x >= 1 && x <=8 && y >= 1 && y <= 8)
-                                movimentos
 
-validaTorre :: Position -> Position -> Bool
-validaTorre (Position char1 y1) (Position char2 y2)
-    = char1 == char2 || y2 == y1 --ou varia coluna com linha fixa, ou varia linha com coluna fixa
-          
-validaRainha :: Position -> Position -> Bool
-validaRainha p1 p2 = validaBispo p1 p2 || validaTorre p1 p2
+caminhoTorre :: Position -> Position -> [Position]
+caminhoTorre (Position char1 y1) (Position char2 y2) = 
+    [Position (converteIntEmColuna x) y | 
+        x <- [min x1 x2 .. max x1 x2], 
+        y <- [min y1 y2 .. max y1 y2], 
+        (x == x1 || y == y1)]
+    where
+        x1 = converteColunaEmInt char1
+        x2 = converteColunaEmInt char2
 
-validaRei :: Position -> Position -> Bool
-validaRei (Position char1 y1) (Position char2 y2) = (x2, y2) `elem` movimentosPossiveis 
-    where x1 = converteColunaEmInt char1
-          x2 = converteColunaEmInt char2
-          offsets = [(-1,  1), (0,  1), (1,  1),
-                     (-1,  0),          (1,  0),
-                     (-1, -1), (0, -1), (1, -1) 
-                    ]
-          movimentos = map (\(x, y) -> (x1 + x, y1 + y)) offsets
-          movimentosPossiveis = filter 
-                                    (\(x, y) -> x >= 1 && x <=8 && y >= 1 && y <= 8)
-                                    movimentos
+caminhoRainha :: Position -> Position -> [Position]
+caminhoRainha (Position char1 y1) (Position char2 y2) = 
+    if char1 == char2 || y1 == y2 --mesma linha ou mesma coluna
+        then caminhoTorre (Position char1 y1) (Position char2 y2)
+    else --nao eh nem mesma linha nem mesma coluna -> alguma diagonal
+        caminhoBispo (Position char1 y1) (Position char2 y2)
+
+--dado que a validade do movimento ja foi verificada
+-- necessariamente o input eh alguma casa adjacente
+-- portanto o caminho do rei eh diretamente sua posicao ++ posicao final
+caminhoRei :: Position -> Position -> [Position]
+caminhoRei p1 p2 = [p1, p2]
 
