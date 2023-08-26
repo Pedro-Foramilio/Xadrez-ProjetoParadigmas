@@ -8,7 +8,7 @@ data Piece = King Color | Queen Color | Rook Color
 
 
 data Color = Black | White deriving (Eq, Show)
-data Position = Position Char Int
+data Position = Position Char Int deriving (Show)
 data Square = Empty | Occupied Piece deriving (Eq, Show)
 type Board = [[Square]]
 
