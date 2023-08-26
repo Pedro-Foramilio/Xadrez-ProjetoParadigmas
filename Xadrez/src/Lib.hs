@@ -77,12 +77,12 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
 returnSquare :: Board -> String -> Square
 returnSquare bd (x0:x1:str) = bd!!y0!!y1
                               where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
-                                    y1 = (digitToInt x1) -1
+                                    y1 = 8 - (digitToInt x1)
 
 isEmptySquare :: Board -> String -> Bool
 isEmptySquare bd (x0:x1:str) = bd!!y0!!y1 == Empty
                                where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
-                                     y1 = (digitToInt x1) -1
+                                     y1 = 8 - (digitToInt x1)
 
 nextPlayer :: Player -> Player
 nextPlayer player | player == Player1 = Player2
@@ -96,9 +96,9 @@ movePiece board (x0:x1:x2:x3:x4) = [[if x == y2 && y == y3 then returnSquare boa
             else if x == y0 && y == y1 then Empty else board!!x!!y |
             y <- [0..((length (board!!x))-1)]]| x <- [0..((length board) - 1)]]
   where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
-        y1 = (digitToInt x1) - 1
+        y1 = 8 - (digitToInt x1)
         y2 = (digitToInt (chr ((ord (toUpper x2)) - 17))) 
-        y3 = (digitToInt x3) -1
+        y3 = 8 - (digitToInt x3)
 
 
 
@@ -116,7 +116,7 @@ playGame turn on player board =
       print player
       userInput <- getLine
       if not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) 
-        --not (validaMovimento (whichPiece (returnSquare board userInput)) (Position (userInput!!0) (digitToInt (userInput!!1))) (Position (userInput!!2) (digitToInt (userInput!!3))))
+        || not (validaMovimento (whichPiece (returnSquare board userInput)) (Position (userInput!!0) (digitToInt (userInput!!1))) (Position (userInput!!2) (digitToInt (userInput!!3))))
           then do  
             putStrLn "movivento invalido"
             playGame turn on player board
@@ -125,9 +125,6 @@ playGame turn on player board =
         playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
   else
     putStrLn "Game Over"
-  
-
-
 
 someFunc :: IO ()
 someFunc = playGame 1 True Player1 initialBoard
