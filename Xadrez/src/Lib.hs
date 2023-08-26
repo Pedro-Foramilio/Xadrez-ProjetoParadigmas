@@ -115,12 +115,9 @@ playGame turn on player board =
       renderBoard board
       print player
       userInput <- getLine
-      if not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) 
+      if not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) --jogador e movimentar para a mesma casa
         || not (validaMovimento (whichPiece (returnSquare board userInput)) (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1))) (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))))
           then do
-            print $ whichPiece (returnSquare board userInput) 
-            print $ Position (userInput!!0) (digitToInt (userInput!!1))
-            print $ Position (userInput!!2) (digitToInt (userInput!!3))
             putStrLn "movivento invalido"
             playGame turn on player board
             --    
