@@ -75,12 +75,12 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
     renderRow = concatMap renderSquare
 
 returnSquare :: Board -> String -> Square
-returnSquare bd (x0:x1:str) = bd!!y0!!y1
+returnSquare bd (x0:x1:str) = bd!!y1!!y0
                               where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
                                     y1 = 8 - (digitToInt x1)
 
 isEmptySquare :: Board -> String -> Bool
-isEmptySquare bd (x0:x1:str) = bd!!y0!!y1 == Empty
+isEmptySquare bd (x0:x1:str) = bd!!y1!!y0 == Empty
                                where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
                                      y1 = 8 - (digitToInt x1)
 
@@ -92,8 +92,8 @@ whichPiece :: Square -> Piece
 whichPiece (Occupied piece) = piece
 
 movePiece :: Board -> String -> Board
-movePiece board (x0:x1:x2:x3:x4) = [[if x == y2 && y == y3 then returnSquare board (x0:x1:x2:x3:x4) 
-            else if x == y0 && y == y1 then Empty else board!!x!!y |
+movePiece board (x0:x1:x2:x3:x4) = [[if x == y3 && y == y2 then returnSquare board (x0:x1:x2:x3:x4) 
+            else if x == y1 && y == y0 then Empty else board!!x!!y |
             y <- [0..((length (board!!x))-1)]]| x <- [0..((length board) - 1)]]
   where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
         y1 = 8 - (digitToInt x1)
@@ -116,8 +116,11 @@ playGame turn on player board =
       print player
       userInput <- getLine
       if not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) 
-        || not (validaMovimento (whichPiece (returnSquare board userInput)) (Position (userInput!!0) (digitToInt (userInput!!1))) (Position (userInput!!2) (digitToInt (userInput!!3))))
-          then do  
+        || not (validaMovimento (whichPiece (returnSquare board userInput)) (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1))) (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))))
+          then do
+            print $ whichPiece (returnSquare board userInput) 
+            print $ Position (userInput!!0) (digitToInt (userInput!!1))
+            print $ Position (userInput!!2) (digitToInt (userInput!!3))
             putStrLn "movivento invalido"
             playGame turn on player board
             --    
