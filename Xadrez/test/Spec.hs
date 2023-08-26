@@ -22,7 +22,8 @@ main = do
     defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Testes Relevantes" [testePeaoInicioFim, testeCavaloInicioFim, testeBispoInicioFim]
+tests = testGroup "Testes Relevantes" [ testePeaoInicioFim, testeCavaloInicioFim, testeBispoInicioFim
+                                      ,testeTorreInicioFim, testeRainhaInicioFim, testeReiInicioFim  ]
 
 testePeaoInicioFim = testGroup
             "Jogadas Peoes - Coordenadas"
@@ -101,3 +102,94 @@ testeBispoInicioFim = testGroup
                     "Bispo F1 G3"
                     (assertEqual "" False (validaMovimento bPreto (Position 'F' 1) (Position 'G' 3)))
             ]
+
+testeTorreInicioFim = testGroup
+            "Jogadas Torre - Coordenadas"
+            [
+                testCase
+                    "Torre D4 D8"
+                    (assertEqual "" True (validaMovimento rBranco (Position 'D' 4) (Position 'D' 8)))
+                , testCase
+                    "Torre F4 H4"
+                    (assertEqual "" True (validaMovimento rPreto (Position 'F' 4) (Position 'H' 4)))
+                , testCase
+                    "Torre B7 A7"
+                    (assertEqual "" True (validaMovimento rBranco (Position 'B' 7) (Position 'A' 7)))
+                , testCase
+                    "Torre C5 C2"
+                    (assertEqual "" True (validaMovimento rPreto (Position 'C' 5) (Position 'C' 2)))
+                , testCase
+                    "Torre C5 C3"
+                    (assertEqual "" True (validaMovimento rBranco (Position 'C' 5) (Position 'C' 3)))
+            ]
+
+testeRainhaInicioFim = testGroup
+            "Jogadas Rainha - Coordenadas"
+            [
+                testCase
+                    "Rainha D4 B6"
+                    (assertEqual "" True (validaMovimento qBranco (Position 'D' 4) (Position 'B' 6)))
+                , testCase
+                    "Rainha D4 A4"
+                    (assertEqual "" True (validaMovimento qBranco (Position 'D' 4) (Position 'A' 4)))
+                , testCase
+                    "Rainha D4 B2"
+                    (assertEqual "" True (validaMovimento qBranco (Position 'D' 4) (Position 'B' 2)))
+                , testCase
+                    "Rainha D4 D3"
+                    (assertEqual "" True (validaMovimento qBranco (Position 'D' 4) (Position 'D' 3)))
+                , testCase
+                    "Rainha D4 F2"
+                    (assertEqual "" True (validaMovimento qBranco (Position 'D' 4) (Position 'F' 2)))
+                , testCase
+                    "Rainha D4 G4"
+                    (assertEqual "" True (validaMovimento qPreto (Position 'D' 4) (Position 'G' 4)))
+                , testCase
+                    "Rainha D4 E5"
+                    (assertEqual "" True (validaMovimento qPreto (Position 'D' 4) (Position 'E' 5)))
+                , testCase
+                    "Rainha D4 D8"
+                    (assertEqual "" True (validaMovimento qPreto (Position 'D' 4) (Position 'D' 8)))
+                , testCase
+                    "Rainha D4 E6"
+                    (assertEqual "" False (validaMovimento qPreto (Position 'D' 4) (Position 'E' 6)))
+            ]
+
+testeReiInicioFim = testGroup
+            "Jogadas Rei - Coordenadas"
+            [
+                testCase
+                    "Rei D7 D6"
+                    (assertEqual "" True (validaMovimento kBranco (Position 'D' 7) (Position 'D' 6)))
+                , testCase
+                    "Rei D7 E6"
+                    (assertEqual "" True (validaMovimento kBranco (Position 'D' 7) (Position 'E' 6)))
+                , testCase
+                    "Rei D7 C6"
+                    (assertEqual "" True (validaMovimento kBranco (Position 'D' 7) (Position 'C' 6)))
+                , testCase
+                    "Rei D7 C7"
+                    (assertEqual "" True (validaMovimento kBranco (Position 'D' 7) (Position 'C' 7)))
+                , testCase
+                    "Rei D7 C8"
+                    (assertEqual "" True (validaMovimento kBranco (Position 'D' 7) (Position 'C' 8)))
+                , testCase
+                    "Rei D7 D8"
+                    (assertEqual "" True (validaMovimento kPreto (Position 'D' 7) (Position 'D' 8)))
+                , testCase
+                    "Rei D7 E7"
+                    (assertEqual "" True (validaMovimento kPreto (Position 'D' 7) (Position 'E' 7)))
+                , testCase
+                    "Rei D7 E8"
+                    (assertEqual "" True (validaMovimento kPreto (Position 'D' 7) (Position 'E' 8)))
+                , testCase
+                    "Rei D7 E5"
+                    (assertEqual "" False (validaMovimento kPreto (Position 'D' 7) (Position 'E' 5)))
+                , testCase
+                    "Rei D7 B7"
+                    (assertEqual "" False (validaMovimento kPreto (Position 'D' 7) (Position 'B' 7)))
+                , testCase
+                    "Rei D7 F5"
+                    (assertEqual "" False (validaMovimento kPreto (Position 'D' 7) (Position 'F' 5)))
+            ]
+
