@@ -46,7 +46,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - Xadrez
-    - gloss
 
 tests:
   Xadrez-test:
@@ -58,3 +57,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - Xadrez
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck
