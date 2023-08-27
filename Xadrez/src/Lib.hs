@@ -115,17 +115,31 @@ playGame turn on player board =
       renderBoard board
       print player
       userInput <- getLine
-      if not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) --jogador e movimentar para a mesma casa
-        || not (validaMovimento (whichPiece (returnSquare board userInput)) (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1))) (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))))
+      let p1 = (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1)))
+      let p2 = (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
+      if (not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) --jogador e movimentar para a mesma casa
+        || not (validaMovimento (whichPiece (returnSquare board userInput)) p1 p2)) 
+        && not (ehRoque board p1 p2)
           then do
             putStrLn "movivento invalido"
             playGame turn on player board
             --    
       else do
-        playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
+        if ehRoque board p1 p2 || (validaInterposicao board p1 p2 
+            && validaComerPropriaPeca board p1 p2 
+            && validaCasosEspeciais board p1 p2)
+          then
+            playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
+            -- TODO? mexer pecas roque
+          else do
+            if (validaComerPropriaPeca board p1 p2)
+              then  putStrLn "Pecas no meio do caminho!"
+              else putStrLn  "Sua propria peca!"
+            playGame turn on player board
+      
   else
     putStrLn "Game Over"
-
+  
 someFunc :: IO ()
 someFunc = playGame 1 True Player1 initialBoard
 

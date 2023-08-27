@@ -246,7 +246,7 @@ someBoard =
   , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
   , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
   , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
-  , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
+  , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,            Occupied (Pawn Black) ]
   , [Occupied (Bishop White), Occupied (Rook White),   Occupied (Pawn White),   Occupied (Pawn White),  Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),  Occupied (Pawn White) ]
   , [ Occupied (Rook White), Occupied (Knight White), Occupied (Bishop White), Occupied (Queen White), Occupied (King White), Occupied (Bishop White), Occupied (Knight White), Occupied (Rook White) ]
   ]
@@ -283,8 +283,27 @@ testesGeraCaminho = testGroup
                     "Caminho Dama A7 <-> C5 == [A7 B6 C5]"
                     (assertEqual "" [Position 'A' 7, Position 'B' 6, Position 'C' 5] 
                         (geraCaminho (Queen White) (Position 'A' 7) (Position 'C' 5)))
+                , testCase
+                    "Caminho Peao B2 <-> B4 == [B2 B3 B4]"
+                    (assertEqual "" [Position 'B' 2, Position 'B' 3, Position 'B' 4] 
+                        (geraCaminho (Pawn White) (Position 'B' 2) (Position 'B' 4)))
+                , testCase
+                    "Caminho Peao B2 <-> B3 == [B2 B3]"
+                    (assertEqual "" [Position 'B' 2, Position 'B' 3] 
+                        (geraCaminho (Pawn White) (Position 'B' 2) (Position 'B' 3)))
+                , testCase
+                    "Caminho Peao B7 <-> B5 == [B7 B6 B5]"
+                    (assertEqual "" [Position 'B' 7, Position 'B' 6, Position 'B' 5] 
+                        (geraCaminho (Pawn Black) (Position 'B' 7) (Position 'B' 5)))
+                , testCase
+                    "Caminho Peao B7 <-> B6 == [B7 B6]"
+                    (assertEqual "" [Position 'B' 7, Position 'B' 6] 
+                        (geraCaminho (Pawn Black) (Position 'B' 7) (Position 'B' 6)))
+                , testCase
+                    "Caminho Peao C5 <-> C6 == [C5 C6]"
+                    (assertEqual "" [Position 'C' 5, Position 'C' 6] 
+                        (geraCaminho (Pawn White) (Position 'C' 5) (Position 'C' 6)))
             ]
-
 testesInterposicao = testGroup
             "Testes Interposicao"
             [
@@ -312,4 +331,10 @@ testesInterposicao = testGroup
                 , testCase
                     "Valida Bispo A2 <-> G8 == False"
                     (assertEqual "" False (validaInterposicao someBoard (Position 'A' 2) (Position 'G' 8)))
+                , testCase
+                    "Valida Peao B2 <-> B4 == True"
+                    (assertEqual "" True (validaInterposicao someBoard (Position 'B' 2) (Position 'B' 4)))
+                , testCase
+                    "Valida Peao H2 <-> H4 == False"
+                    (assertEqual "" False (validaInterposicao someBoard (Position 'H' 2) (Position 'H' 4)))
             ]

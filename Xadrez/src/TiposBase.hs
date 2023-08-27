@@ -1,5 +1,6 @@
 module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
-    ,validaMovimento, getSquare, getPiece, geraCaminho, validaInterposicao ) where
+    ,validaMovimento, getSquare, getPiece, geraCaminho, validaInterposicao, 
+     validaComerPropriaPeca, validaCasosEspeciais, ehRoque ) where
 
 import Prelude
 
@@ -45,6 +46,14 @@ getSquare board (Position charr y) = board !! (8 - y) !! x
 
 getPiece :: Square -> Piece
 getPiece (Occupied piece) = piece
+
+getCor :: Piece -> Color
+getCor (Pawn c)   = c
+getCor (Bishop c) = c
+getCor (Knight c) = c
+getCor (Rook c)   = c
+getCor (Queen c)  = c
+getCor (King c)   = c
 
 geraMovimentos :: Piece -> Position -> [Position]
 geraMovimentos (Pawn cor)   p = geraMovimentosPeao p cor
@@ -147,9 +156,30 @@ validaInterposicao board p1 p2 = caminhoFiltrado == [p1, p2] || caminhoFiltrado 
 
 geraCaminho :: Piece -> Position -> Position -> [Position]
 geraCaminho (Bishop _) = caminhoBispo
+geraCaminho (Knight _) = caminhoCavalo
 geraCaminho (Rook   _) = caminhoTorre
 geraCaminho (Queen  _) = caminhoRainha
 geraCaminho (King   _) = caminhoRei
+geraCaminho (Pawn White) = caminhoPeaoBranco
+geraCaminho (Pawn Black) = caminhoPeaoPreto
+
+
+caminhoPeaoBranco :: Position -> Position -> [Position]
+caminhoPeaoBranco (Position char y1) (Position _ y2) = 
+    case y1 of
+        2 -> case y2 of
+            3 -> [Position char 2, Position char 3]
+            4 -> [Position char 2, Position char 3, Position char 4]
+        _ -> [Position char y1, Position char y2]
+
+
+caminhoPeaoPreto :: Position -> Position -> [Position]
+caminhoPeaoPreto (Position char y1) (Position _ y2) = 
+    case y1 of
+        7 -> case y2 of
+            6 -> [Position char 7, Position char 6]
+            5 -> [Position char 7, Position char 6, Position char 5]
+        _ -> [Position char y1, Position char y2]
 
 caminhoBispo :: Position -> Position -> [Position]
 caminhoBispo (Position char1 y1) (Position char2 y2) = 
@@ -160,6 +190,10 @@ caminhoBispo (Position char1 y1) (Position char2 y2) =
     where
         x1 = converteColunaEmInt char1
         x2 = converteColunaEmInt char2
+
+--movimentos ja validados... nada pode bloquear o cavalo
+caminhoCavalo :: Position -> Position -> [Position]
+caminhoCavalo p1 p2 = [p1, p2]
 
 caminhoTorre :: Position -> Position -> [Position]
 caminhoTorre (Position char1 y1) (Position char2 y2) = 
@@ -184,3 +218,60 @@ caminhoRainha (Position char1 y1) (Position char2 y2) =
 caminhoRei :: Position -> Position -> [Position]
 caminhoRei p1 p2 = [p1, p2]
 
+-- retorna TRUE -> OK se cores diferentes
+validaComerPropriaPeca :: Board -> Position -> Position -> Bool
+validaComerPropriaPeca board p1 p2 
+    = quadrado2 == Empty || (getCor peca1 /= getCor peca2)
+    where
+        peca1 = getPiece $ quadrado1
+        peca2 = getPiece $ quadrado2
+        quadrado1 = getSquare board p1
+        quadrado2 = getSquare board p2
+
+
+--Nao deixar peao comer na frente
+-- Peca Encravada
+--En Passant
+validaCasosEspeciais :: Board -> Position -> Position -> Bool
+validaCasosEspeciais _ _ _ = True 
+
+ehRoque :: Board -> Position -> Position -> Bool
+ehRoque board (Position char1 y1) (Position char2 y2) 
+    = char1 == 'E' && (piece == King White || piece == King Black ) &&
+        case cor of
+            White -> y1 == 1 && y2 == 1 && pieceDestino == Rook White &&
+                case char2 of
+                    'A' -> foldr ((&&) . (== Empty)) True meioRoqueBrancoGrande
+                    'H' -> foldr ((&&) . (== Empty)) True meioRoqueBrancoCurto
+            Black -> y1 == 8 && y2 == 8 && pieceDestino == Rook Black &&
+                case char2 of
+                    'A' -> foldr ((&&) . (== Empty)) True meioRoquePretoGrande
+                    'H' -> foldr ((&&) . (== Empty)) True meioRoquePretoCurto
+
+    where
+        x1 = converteColunaEmInt char1
+        x2 = converteColunaEmInt char2
+        piece = getPiece $ getSquare board (Position char1 y1)
+        cor = getCor piece
+        pieceDestino = getPiece $ getSquare board (Position char2 y2)
+        meioRoqueBrancoGrande = [
+            getSquare board (Position 'B' 1),
+            getSquare board (Position 'C' 1),
+            getSquare board (Position 'D' 1)
+            ]
+        meioRoqueBrancoCurto = [
+            getSquare board (Position 'F' 1),
+            getSquare board (Position 'G' 1)
+            ]
+        meioRoquePretoGrande = [
+            getSquare board (Position 'B' 8),
+            getSquare board (Position 'C' 8),
+            getSquare board (Position 'D' 8)
+            ]
+        meioRoquePretoCurto = [
+            getSquare board (Position 'F' 8),
+            getSquare board (Position 'G' 8)
+            ]
+
+
+        
