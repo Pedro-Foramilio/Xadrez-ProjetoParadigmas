@@ -38,8 +38,8 @@ testePeaoInicioFim = testGroup
                     "Peao Branco C8 C7 == False"
                     (assertEqual "" False (validaMovimento pBranco (Position 'C' 8) (Position 'C' 7)))
                 , testCase
-                    "Peao Branco C4 B5 == False"
-                    (assertEqual "" False (validaMovimento pBranco (Position 'C' 4) (Position 'B' 5)))
+                    "Peao Branco C4 B5 == True"
+                    (assertEqual "" True (validaMovimento pBranco (Position 'C' 4) (Position 'B' 5)))
                 , testCase
                     "Peao Preto D7 D5 == True"
                     (assertEqual "" True (validaMovimento pPreto (Position 'D' 7) (Position 'D' 5)))
@@ -50,8 +50,8 @@ testePeaoInicioFim = testGroup
                     "Peao Branco A2 A3 == False"
                     (assertEqual "" False (validaMovimento pPreto (Position 'A' 2) (Position 'A' 3)))
                 , testCase
-                    "Peao Branco C5 B4 == False"
-                    (assertEqual "" False (validaMovimento pPreto (Position 'C' 5) (Position 'B' 4)))
+                    "Peao Branco C5 B4 == True"
+                    (assertEqual "" True (validaMovimento pPreto (Position 'C' 5) (Position 'B' 4)))
             ]
 
 testeCavaloInicioFim = testGroup

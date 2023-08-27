@@ -1,5 +1,5 @@
 module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
-    ,validaMovimento, getSquare, getPiece, geraCaminho, validaInterposicao, 
+    ,validaMovimento, getSquare, getPiece, getCor, geraCaminho, validaInterposicao, 
      validaComerPropriaPeca, validaCasosEspeciais, ehRoque ) where
 
 import Prelude
@@ -66,14 +66,21 @@ geraMovimentos (King _)     p = geraMovimentosRei p
 -- TODO? considerar captura diagnoal??
 geraMovimentosPeao :: Position -> Color -> [Position]
 geraMovimentosPeao (Position charr y) cor 
-    = filter isInBoard movimentos
-    where movimentos = case cor of
+    = filter isInBoard (movimentosHorizontais ++ movimentosDiagonais)
+    where 
+        movimentosHorizontais = case cor of
                             White -> case y of
                                         2 -> [Position charr (y+1), Position charr (y+2)]
                                         _ -> [Position charr (y+1)]
                             Black -> case y of
                                         7 -> [Position charr (y-1), Position charr (y-2)]
                                         _ -> [Position charr (y-1)] 
+        movimentosDiagonais = case cor of
+                            White -> [Position (converteIntEmColuna (converteColunaEmInt charr + 1)) (y+1),
+                                      Position (converteIntEmColuna (converteColunaEmInt charr - 1)) (y+1)]
+                            Black -> [Position (converteIntEmColuna (converteColunaEmInt charr + 1)) (y-1),
+                                      Position (converteIntEmColuna (converteColunaEmInt charr - 1)) (y-1)]
+
 
 geraMovimentosCavalo :: Position -> [Position]
 geraMovimentosCavalo (Position charr y')
@@ -141,9 +148,14 @@ validaRei p1 p2 = p2 `elem` geraMovimentosRei p1
 
 
 validaInterposicao :: Board -> Position -> Position -> Bool
-validaInterposicao board p1 p2 = caminhoFiltrado == [p1, p2] || caminhoFiltrado == [p2, p1] 
-    where 
+validaInterposicao board (Position char1 y1) (Position char2 y2) = (caminhoFiltrado == [p1, p2] 
+                                 || caminhoFiltrado == [p2, p1])
+                                 && validaDestinoPeao 
+    where
+        p1 =  (Position char1 y1)
+        p2 = (Position char2 y2)
         pecaInicial = getPiece $ getSquare board p1
+        quadradoDestino = getSquare board p2
         caminho = geraCaminho pecaInicial p1 p2
         caminhoFiltrado' = filter
                             (\pos -> getSquare board pos /= Empty) 
@@ -153,6 +165,10 @@ validaInterposicao board p1 p2 = caminhoFiltrado == [p1, p2] || caminhoFiltrado 
                 then caminhoFiltrado'
             else
                 caminhoFiltrado' ++ [p2]
+        validaDestinoPeao = not (pecaInicial == Pawn White || pecaInicial == Pawn Black)
+                            || if char1 == char2
+                                    then quadradoDestino == Empty
+                                    else quadradoDestino /= Empty
 
 geraCaminho :: Piece -> Position -> Position -> [Position]
 geraCaminho (Bishop _) = caminhoBispo
@@ -165,21 +181,27 @@ geraCaminho (Pawn Black) = caminhoPeaoPreto
 
 
 caminhoPeaoBranco :: Position -> Position -> [Position]
-caminhoPeaoBranco (Position char y1) (Position _ y2) = 
-    case y1 of
-        2 -> case y2 of
-            3 -> [Position char 2, Position char 3]
-            4 -> [Position char 2, Position char 3, Position char 4]
-        _ -> [Position char y1, Position char y2]
+caminhoPeaoBranco (Position char1 y1) (Position char2 y2) = 
+    if char1 == char2
+        then
+            case y1 of
+                2 -> case y2 of
+                    3 -> [Position char1 2, Position char1 3]
+                    4 -> [Position char1 2, Position char1 3, Position char1 4]
+                _ -> [Position char1 y1, Position char1 y2]
 
+        else [Position char1 y1,Position char2 y2]
 
 caminhoPeaoPreto :: Position -> Position -> [Position]
-caminhoPeaoPreto (Position char y1) (Position _ y2) = 
-    case y1 of
-        7 -> case y2 of
-            6 -> [Position char 7, Position char 6]
-            5 -> [Position char 7, Position char 6, Position char 5]
-        _ -> [Position char y1, Position char y2]
+caminhoPeaoPreto (Position char y1) (Position char2 y2) = 
+    if char == char2
+        then
+            case y1 of
+                7 -> case y2 of
+                    6 -> [Position char 7, Position char 6]
+                    5 -> [Position char 7, Position char 6, Position char 5]
+                _ -> [Position char y1, Position char y2]
+        else [Position char y1, Position char2 y2]
 
 caminhoBispo :: Position -> Position -> [Position]
 caminhoBispo (Position char1 y1) (Position char2 y2) = 

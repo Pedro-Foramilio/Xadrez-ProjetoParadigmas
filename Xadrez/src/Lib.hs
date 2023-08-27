@@ -58,18 +58,18 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
     renderSquare (Occupied piece)     = renderPiece piece
 
     renderPiece :: Piece -> [Char]
-    renderPiece (Queen Black)    = " bq "--"♛"
-    renderPiece (King Black)     = " bk "--"♚"
-    renderPiece (Rook Black)     = " br "--"♜"
-    renderPiece (Bishop Black)   = " bb "--"♝"
-    renderPiece (Knight Black)   = " bt "--"♞"
-    renderPiece (Pawn Black)     = " bp "--"♟"
-    renderPiece (King White)     = " wk "--"♔"
-    renderPiece (Queen White)    = " wq "--"♕"
-    renderPiece (Rook White)     = " wr "--"♖"
-    renderPiece (Bishop White)   = " wb "--"♗"
-    renderPiece (Knight White)   = " wt "--"♘"
-    renderPiece (Pawn White)     = " wp "--"♙"
+    renderPiece (Queen  White)     = "♛"
+    renderPiece (King   White)     = "♚"
+    renderPiece (Rook   White)     = "♜"
+    renderPiece (Bishop White)     = "♝"
+    renderPiece (Knight White)     = "♞"
+    renderPiece (Pawn   White)     = "♟"
+    renderPiece (King   Black)     = "♔"
+    renderPiece (Queen  Black)     = "♕"
+    renderPiece (Rook   Black)     = "♖"
+    renderPiece (Bishop Black)     = "♗"
+    renderPiece (Knight Black)     = "♘"
+    renderPiece (Pawn   Black)     = "♙"
 
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
@@ -108,6 +108,13 @@ validPositions (x:xs) i | ((not (i `mod` 2 == 0)) && (isDigit x)  &&  (ord x >= 
                             || (i `mod`  2 == 0 && (isAlpha x) && (ord (toUpper x) >= 65 && ord (toUpper x) <= 72)) = validPositions xs (i + 1)
                         | otherwise = False
 
+validaMexerPropriaPeca :: Player -> Board -> Position -> Bool
+validaMexerPropriaPeca player board p1 
+  = (player == Player1 && cor == White) || (player == Player2 && cor == Black)
+  where
+    cor = getCor $ getPiece $ getSquare board p1
+
+
 playGame :: Int -> Bool -> Player -> Board -> IO ()
 playGame turn on player board =
   if on
@@ -128,6 +135,7 @@ playGame turn on player board =
         if ehRoque board p1 p2 || (validaInterposicao board p1 p2 
             && validaComerPropriaPeca board p1 p2 
             && validaCasosEspeciais board p1 p2)
+            && validaMexerPropriaPeca player board p1
           then
             playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
             -- TODO? mexer pecas roque
