@@ -115,10 +115,7 @@ converteIntEmColuna 6 ='F'
 converteIntEmColuna 7 ='G' 
 converteIntEmColuna 8 ='H' 
 
---Retorna cor do jogador
-playerColor :: Player -> Color
-playerColor Player1 = White
-playerColor Player2 = Black
+
 
 --Retorna uma lista de tuplas com a posição e peças de uma das cores
 allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
