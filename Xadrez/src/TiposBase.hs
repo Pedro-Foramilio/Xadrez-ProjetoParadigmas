@@ -64,7 +64,7 @@ geraMovimentos (Rook _)     p = geraMovimentosTorre p
 geraMovimentos (Queen _)    p = geraMovimentosRainha p
 geraMovimentos (King _)     p = geraMovimentosRei p
 
--- TODO? considerar captura diagnoal??
+
 geraMovimentosPeao :: Position -> Color -> [Position]
 geraMovimentosPeao (Position charr y) cor 
     = filter isInBoard (movimentosHorizontais ++ movimentosDiagonais)

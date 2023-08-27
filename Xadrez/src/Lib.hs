@@ -199,7 +199,8 @@ playGame turn on player board =
                                 putStrLn "InputInvaldido!"
                                 playGame turn on player board
               else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)  
-          else do
+        else do
+            print "Movimento Invalido!!"
             playGame turn on player board
   else
     putStrLn "Game Over"
