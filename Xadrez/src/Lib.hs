@@ -39,7 +39,6 @@ initialBoard =
   , [ Occupied (Rook White), Occupied (Knight White), Occupied (Bishop White), Occupied (Queen White), Occupied (King White), Occupied (Bishop White), Occupied (Knight White), Occupied (Rook White) ]
   ]
 
-
 -- 1. Coletar Input do Usuario: devolver Posicao ini Posicao fin
 -- 2.1 Validar o movimento da peca (origem x destino)
 -- 2.2 Validar Excecoes (ROque, Cheque, Cheque Mate, En Passan)
@@ -54,22 +53,22 @@ renderBoard :: Board -> IO ()
 renderBoard board = putStrLn $ unlines $ map renderRow board
   where
     renderSquare :: Square -> [Char]
-    renderSquare Empty                      = "-"
+    renderSquare Empty                      = " - "
     renderSquare (Occupied piece)     = renderPiece piece
 
     renderPiece :: Piece -> [Char]
-    renderPiece (Queen  White)     = "♛"
-    renderPiece (King   White)     = "♚"
-    renderPiece (Rook   White)     = "♜"
-    renderPiece (Bishop White)     = "♝"
-    renderPiece (Knight White)     = "♞"
-    renderPiece (Pawn   White)     = "♟"
-    renderPiece (King   Black)     = "♔"
-    renderPiece (Queen  Black)     = "♕"
-    renderPiece (Rook   Black)     = "♖"
-    renderPiece (Bishop Black)     = "♗"
-    renderPiece (Knight Black)     = "♘"
-    renderPiece (Pawn   Black)     = "♙"
+    renderPiece (Queen  White)     = " ♛ "
+    renderPiece (King   White)     = " ♚ "
+    renderPiece (Rook   White)     = " ♜ "
+    renderPiece (Bishop White)     = " ♝ "
+    renderPiece (Knight White)     = " ♞ "
+    renderPiece (Pawn   White)     = " ♟ "
+    renderPiece (King   Black)     = " ♔ "
+    renderPiece (Queen  Black)     = " ♕ "
+    renderPiece (Rook   Black)     = " ♖ "
+    renderPiece (Bishop Black)     = " ♗ "
+    renderPiece (Knight Black)     = " ♘ "
+    renderPiece (Pawn   Black)     = " ♙ "
 
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
@@ -87,6 +86,10 @@ isEmptySquare bd (x0:x1:str) = bd!!y1!!y0 == Empty
 nextPlayer :: Player -> Player
 nextPlayer player | player == Player1 = Player2
                   | otherwise = Player1
+
+playerColor :: Player -> Color
+playerColor Player1 = White
+playerColor Player2 = Black
 
 whichPiece :: Square -> Piece
 whichPiece (Occupied piece) = piece
@@ -114,6 +117,20 @@ validaMexerPropriaPeca player board p1
   where
     cor = getCor $ getPiece $ getSquare board p1
 
+validaInputPromocao :: String -> Bool
+validaInputPromocao _ = True
+
+atualizaBoardComPromocao :: Board -> Position -> Piece -> Board
+atualizaBoardComPromocao board (Position charr y) peca = 
+  case y of
+    8 -> novaLinha : tail board
+    1 -> init board ++ [novaLinha]
+    where
+      linhaParaAlterar = case y of
+                    1 -> board !! 7
+                    8 -> board !! 0
+      novaLinha = [linhaParaAlterar !! i | i <- [0 .. converteColunaEmInt charr - 2] ]
+                  ++ [Occupied peca] ++ [linhaParaAlterar !! i | i <- [converteColunaEmInt charr .. 7] ]
 
 playGame :: Int -> Bool -> Player -> Board -> IO ()
 playGame turn on player board =
@@ -155,14 +172,22 @@ playGame turn on player board =
                                     let board1 = movePiece board "H8F8"
                                     let board2 = movePiece board1 "E8G8"
                                     playGame (turn + 1) on (nextPlayer player) board2
-            else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
-            
+            else
+              if ehPromocao board p1 p2
+                then do
+                        putStrLn "Promote to which piece? ('B' -> Bishop | 'N' -> Knight | 'Q' -> Queen)"
+                        inputPromocao <- getLine
+                        if validaInputPromocao inputPromocao
+                          then case inputPromocao of
+                                  "N" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Knight $ playerColor player)) 
+                                  "B" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Bishop $ playerColor player)) 
+                                  "Q" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Queen $ playerColor player)) 
+                        else do
+                                putStrLn "InputInvaldido!"
+                                playGame turn on player board
+              else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)  
           else do
-            if (validaComerPropriaPeca board p1 p2)
-              then  putStrLn "Pecas no meio do caminho!"
-              else putStrLn  "Sua propria peca!"
             playGame turn on player board
-      
   else
     putStrLn "Game Over"
   
