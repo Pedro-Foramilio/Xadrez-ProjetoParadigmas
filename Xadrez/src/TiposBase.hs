@@ -1,6 +1,6 @@
 module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
     ,validaMovimento, getSquare, getPiece, getCor, geraCaminho, validaInterposicao, 
-     validaComerPropriaPeca, validaCasosEspeciais, ehRoque ) where
+     validaComerPropriaPeca, validaCasosEspeciais, ehRoque, ehPromocao ) where
 
 import Prelude
 
@@ -251,8 +251,8 @@ validaComerPropriaPeca board p1 p2
         quadrado2 = getSquare board p2
 
 
---Nao deixar peao comer na frente
--- Peca Encravada
+-- Cheque?
+-- Peca Encravada ?
 --En Passant
 validaCasosEspeciais :: Board -> Position -> Position -> Bool
 validaCasosEspeciais _ _ _ = True 
@@ -297,4 +297,12 @@ ehRoque board (Position char1 y1) (Position char2 y2)
             ]
 
 
-        
+ehPromocao :: Board -> Position -> Position -> Bool
+ehPromocao board (Position char1 y1) (Position char2 y2) 
+    = (piece == Pawn White || piece == Pawn Black)
+      && quadradoDestino == Empty
+      && char1 == char2
+      && ((piece == Pawn White && y2 == 8) || (piece == Pawn Black && y2 == 1))
+    where
+        piece = getPiece $ getSquare board (Position char1 y1)
+        quadradoDestino = getSquare board (Position char2 y2)

@@ -137,8 +137,26 @@ playGame turn on player board =
             && validaCasosEspeciais board p1 p2)
             && validaMexerPropriaPeca player board p1
           then
-            playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
-            -- TODO? mexer pecas roque
+            if ehRoque board p1 p2
+              then case p2 of
+                Position 'A' 1 -> do
+                                    let board1 = movePiece board "A1D1"
+                                    let board2 = movePiece board1 "E1C1"
+                                    playGame (turn + 1) on (nextPlayer player) board2
+                Position 'H' 1 -> do
+                                    let board1 = movePiece board "H1F1"
+                                    let board2 = movePiece board1 "E1G1"
+                                    playGame (turn + 1) on (nextPlayer player) board2
+                Position 'A' 8 -> do
+                                    let board1 = movePiece board "A8D8"
+                                    let board2 = movePiece board1 "E8C8"
+                                    playGame (turn + 1) on (nextPlayer player) board2
+                Position 'H' 8 -> do
+                                    let board1 = movePiece board "H8F8"
+                                    let board2 = movePiece board1 "E8G8"
+                                    playGame (turn + 1) on (nextPlayer player) board2
+            else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)
+            
           else do
             if (validaComerPropriaPeca board p1 p2)
               then  putStrLn "Pecas no meio do caminho!"
