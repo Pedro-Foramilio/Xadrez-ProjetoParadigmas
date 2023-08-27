@@ -301,7 +301,6 @@ ehPromocao :: Board -> Position -> Position -> Bool
 ehPromocao board (Position char1 y1) (Position char2 y2) 
     = (piece == Pawn White || piece == Pawn Black)
       && quadradoDestino == Empty
-      && char1 == char2
       && ((piece == Pawn White && y2 == 8) || (piece == Pawn Black && y2 == 1))
     where
         piece = getPiece $ getSquare board (Position char1 y1)
