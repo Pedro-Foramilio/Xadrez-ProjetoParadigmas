@@ -257,6 +257,7 @@ validaComerPropriaPeca board p1 p2
 validaCasosEspeciais :: Board -> Position -> Position -> Bool
 validaCasosEspeciais _ _ _ = True 
 
+-- TODO: validar se nao eh roque invalido como?
 ehRoque :: Board -> Position -> Position -> Bool
 ehRoque board (Position char1 y1) (Position char2 y2) 
     = char1 == 'E' && (piece == King White || piece == King Black ) &&
