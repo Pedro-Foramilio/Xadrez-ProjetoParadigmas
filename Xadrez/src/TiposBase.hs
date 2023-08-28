@@ -1,6 +1,6 @@
 module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
     ,validaMovimento, getSquare, getPiece, getCor, geraCaminho, validaInterposicao, 
-     validaComerPropriaPeca, validaCasosEspeciais, ehRoque, ehPromocao, 
+     validaComerPropriaPeca, validaCasosEspeciais, ehRoque, ehPromocao, geraMovimentos,
      converteColunaEmInt, converteIntEmColuna) where
 
 import Prelude
@@ -261,7 +261,7 @@ validaCasosEspeciais _ _ _ = True
 -- TODO: validar se nao eh roque invalido como?
 ehRoque :: Board -> Position -> Position -> Bool
 ehRoque board (Position char1 y1) (Position char2 y2) 
-    = char1 == 'E' && (piece == King White || piece == King Black ) &&
+    = char1 == 'E' && (piece == King White || piece == King Black ) && quadradoDestino /= Empty &&
         case cor of
             White -> y1 == 1 && y2 == 1 && pieceDestino == Rook White &&
                 case char2 of
@@ -277,6 +277,7 @@ ehRoque board (Position char1 y1) (Position char2 y2)
         x2 = converteColunaEmInt char2
         piece = getPiece $ getSquare board (Position char1 y1)
         cor = getCor piece
+        quadradoDestino = getSquare board (Position char2 y2)
         pieceDestino = getPiece $ getSquare board (Position char2 y2)
         meioRoqueBrancoGrande = [
             getSquare board (Position 'B' 1),
