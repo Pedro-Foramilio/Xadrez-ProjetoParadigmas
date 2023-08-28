@@ -73,18 +73,6 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
 
---Retorna uma lista de tuplas com a posição e peças de uma das cores
-allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
-allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(x + 1))  (y + 8), whichPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y == Occupied (_ color)]
-
---Encontra o rei de uma certa cor
-whereIsKing :: Board -> Color -> Position
-whereIsKing board color = head [Position (converteIntEmColuna(x + 1))  (y + 8) | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y == Occupied (King color)]
-
-isCheck :: Board -> String -> Player ->Bool
-isCheck board userInput player = validaMovimento (whichPiece (returnSquare board userInput)) 
-                             (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
-                              (whereIsKing board (playerColor (nextPlayer player)))
 
 returnSquare :: Board -> String -> Square
 returnSquare bd (x0:x1:str) = bd!!y1!!y0

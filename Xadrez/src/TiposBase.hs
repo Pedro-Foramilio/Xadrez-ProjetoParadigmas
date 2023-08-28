@@ -1,7 +1,7 @@
 module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
     ,validaMovimento, getSquare, getPiece, getCor, geraCaminho, validaInterposicao, 
      validaComerPropriaPeca, validaCasosEspeciais, ehRoque, ehPromocao, 
-     converteColunaEmInt, converteIntEmColuna) where
+     converteColunaEmInt, converteIntEmColuna, geraMovimentos, isInBoard) where
 
 import Prelude
 

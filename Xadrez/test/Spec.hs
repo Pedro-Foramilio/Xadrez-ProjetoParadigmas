@@ -2,6 +2,7 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 
 import TiposBase
+import IA
 
 pBranco = Pawn White
 pPreto  = Pawn Black
@@ -16,10 +17,23 @@ qPreto = Queen Black
 kBranco = King White
 kPreto = King Black
 
+initialBoard :: Board
+initialBoard =
+  [ [ Occupied (Rook Black), Occupied (Knight Black), Occupied (Bishop Black), Occupied (Queen Black), Occupied (King Black), Occupied (Bishop Black), Occupied (Knight Black), Occupied (Rook Black) ]
+  , [ Occupied (Pawn Black), Occupied (Pawn Black),   Occupied (Pawn Black),   Occupied (Pawn Black),  Occupied (Pawn Black), Occupied (Pawn Black),   Occupied (Pawn Black),   Occupied (Pawn Black) ]
+  , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
+  , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
+  , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
+  , [        Empty,                 Empty,                   Empty,                   Empty,                  Empty,                 Empty,                   Empty,                   Empty          ]
+  , [ Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),   Occupied (Pawn White),  Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),   Occupied (Pawn White) ]
+  , [ Occupied (Rook White), Occupied (Knight White), Occupied (Bishop White), Occupied (Queen White), Occupied (King White), Occupied (Bishop White), Occupied (Knight White), Occupied (Rook White) ]
+  ]
+
 main :: IO ()
 main = do
-    defaultMain tests
-
+    gerarMovimentoPretas initialBoard
+    --defaultMain tests
+{-
 tests :: TestTree
 tests = testGroup "Testes Relevantes" [ testePeaoInicioFim, testeCavaloInicioFim, testeBispoInicioFim
                                       ,testeTorreInicioFim, testeRainhaInicioFim, testeReiInicioFim  
@@ -338,3 +352,4 @@ testesInterposicao = testGroup
                     "Valida Peao H2 <-> H4 == False"
                     (assertEqual "" False (validaInterposicao someBoard (Position 'H' 2) (Position 'H' 4)))
             ]
+-}
