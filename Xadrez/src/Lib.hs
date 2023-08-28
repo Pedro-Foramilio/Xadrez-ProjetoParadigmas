@@ -4,6 +4,8 @@ import TiposBase
 import Control.Monad.State
 import Data.Char
     ( ord, digitToInt, chr, isAlpha, isDigit, toUpper )
+import GHC.RTS.Flags (TraceFlags(user))
+
 
 
 
@@ -28,6 +30,16 @@ type GameValue = Player
 
 
 initialBoard :: Board
+initialBoard' =
+  [ [ Occupied (Rook Black), Occupied (Knight Black), Occupied (Bishop Black), Occupied (Queen Black), Occupied (King Black), Occupied (Bishop Black), Occupied (Knight Black), Occupied (Rook Black) ]
+  , [ Occupied (Pawn Black), Occupied (Pawn Black),   Occupied (Pawn Black),   Occupied (Pawn Black),               Empty,    Occupied (Pawn Black),   Occupied (Pawn Black),   Occupied (Pawn Black) ]
+  , [ Empty,                 Empty,                    Empty,                   Empty,                  Empty,               Empty,               Empty,                 Empty               ]
+  , [ Empty,                 Empty,                    Empty,                   Empty,                  Empty,               Empty,                 Empty,                 Empty               ]
+  , [ Empty,                 Empty,                    Empty,                   Empty,                  Empty,               Empty,                 Empty,                 Empty               ]
+  , [ Empty,                 Empty,                    Empty,                   Empty,                  Empty,               Empty,                 Empty,                 Empty               ]
+  , [ Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),   Empty,  Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),   Occupied (Pawn White) ]
+  , [ Occupied (Rook White), Empty, Empty, Empty, Occupied (King White), Occupied (Bishop White), Occupied (Knight White), Occupied (Rook White) ]
+  ]
 initialBoard =
   [ [ Occupied (Rook Black), Occupied (Knight Black), Occupied (Bishop Black), Occupied (Queen Black), Occupied (King Black), Occupied (Bishop Black), Occupied (Knight Black), Occupied (Rook Black) ]
   , [ Occupied (Pawn Black), Occupied (Pawn Black),   Occupied (Pawn Black),   Occupied (Pawn Black),  Occupied (Pawn Black), Occupied (Pawn Black),   Occupied (Pawn Black),   Occupied (Pawn Black) ]
@@ -53,26 +65,48 @@ renderBoard :: Board -> IO ()
 renderBoard board = putStrLn $ unlines $ map renderRow board
   where
     renderSquare :: Square -> [Char]
-    renderSquare Empty                      = " - "
+    renderSquare Empty                      = " -- "
     renderSquare (Occupied piece)     = renderPiece piece
 
     renderPiece :: Piece -> [Char]
-    renderPiece (Queen  White)     = " ♛ "
-    renderPiece (King   White)     = " ♚ "
-    renderPiece (Rook   White)     = " ♜ "
-    renderPiece (Bishop White)     = " ♝ "
-    renderPiece (Knight White)     = " ♞ "
-    renderPiece (Pawn   White)     = " ♟ "
-    renderPiece (King   Black)     = " ♔ "
-    renderPiece (Queen  Black)     = " ♕ "
-    renderPiece (Rook   Black)     = " ♖ "
-    renderPiece (Bishop Black)     = " ♗ "
-    renderPiece (Knight Black)     = " ♘ "
-    renderPiece (Pawn   Black)     = " ♙ "
+    renderPiece (Queen  White)     = " wq "--" ♛ "
+    renderPiece (King   White)     = " wk "--" ♚ "
+    renderPiece (Rook   White)     = " wr "--" ♜ "
+    renderPiece (Bishop White)     = " wb "--" ♝ "
+    renderPiece (Knight White)     = " wn "--" ♞ "
+    renderPiece (Pawn   White)     = " wp "--" ♟ "
+    renderPiece (King   Black)     = " bk "--" ♔ "
+    renderPiece (Queen  Black)     = " bq "--" ♕ "
+    renderPiece (Rook   Black)     = " br "--" ♖ "
+    renderPiece (Bishop Black)     = " bb "--" ♗ "
+    renderPiece (Knight Black)     = " bn "--" ♘ "
+    renderPiece (Pawn   Black)     = " bp "--" ♙ "
 
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
 
+--Retorna uma lista de tuplas com a posição e peças de uma das cores
+allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
+allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(y + 1))  (8 - x), whichPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y /= Empty && verifyColorSquare (whichPiece (board!!x!!y)) color]
+
+ -- Verifica se a peça que está no quadrado é da cor correspondente
+verifyColorSquare :: Piece -> Color -> Bool
+verifyColorSquare (Queen colorPiece) color =  colorPiece == color
+verifyColorSquare (King colorPiece) color =  colorPiece == color
+verifyColorSquare (Rook colorPiece) color =  colorPiece == color
+verifyColorSquare (Bishop colorPiece) color =  colorPiece == color
+verifyColorSquare (Knight colorPiece) color =  colorPiece == color
+verifyColorSquare (Pawn colorPiece) color =  colorPiece == color
+
+
+--Encontra o rei de uma certa cor
+whereIsKing :: Board -> Color -> Position
+whereIsKing board color = head [Position (converteIntEmColuna(y + 1))  (8 - x) | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y == Occupied (King color)]
+
+--isCheck :: Board -> String -> Player ->Bool
+--isCheck board userInput player = validaMovimento (whichPiece (returnSquare board userInput)) 
+--                             (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
+--                              (whereIsKing board (playerColor (nextPlayer player)))
 
 returnSquare :: Board -> String -> Square
 returnSquare bd (x0:x1:str) = bd!!y1!!y0
@@ -104,7 +138,74 @@ movePiece board (x0:x1:x2:x3:x4) = [[if x == y3 && y == y2 then returnSquare boa
         y2 = (digitToInt (chr ((ord (toUpper x2)) - 17))) 
         y3 = 8 - (digitToInt x3)
 
+--Retorna todas as peças que dao check
+whichGiveCheck :: Board -> Position -> [(Position, Piece)] -> [Piece]
+whichGiveCheck board kingPos otherPlayerPieces = [ snd x  | x <- otherPlayerPieces, validaMovimento (snd x) (fst x) kingPos && validaInterposicao board (fst x) kingPos && validaComerPropriaPeca board (fst x) kingPos ]
 
+ -- Se tiver alguma peça que pode atacar o rei
+isCheck :: [Piece] -> Bool
+isCheck [] = False
+isCheck pieces = True
+
+--Verifica se a lista de posicoes se está vazia
+isRoque :: [a] -> Bool
+isRoque [] = True
+isRoque pieces = False
+
+
+roqueAlreadMoved :: (Piece, Position) -> [(Piece, Position)] -> Bool
+roqueAlreadMoved p xs = isRoque([x | x <- xs, x == p])
+
+addRoqueAlreadMoved :: (Piece, Position) -> [(Piece, Position)] -> [(Piece, Position)]
+addRoqueAlreadMoved (King Black, Position 'E' 8) xs = xs ++ [(King Black, Position 'E' 8)]
+addRoqueAlreadMoved (King White, Position 'E' 1) xs = xs ++ [(King White, Position 'E' 1)]
+addRoqueAlreadMoved (Rook Black, Position 'A' 8) xs = xs ++ [(Rook Black, Position 'A' 8)]
+addRoqueAlreadMoved (Rook Black, Position 'H' 8) xs = xs ++ [(Rook Black, Position 'H' 8)]
+addRoqueAlreadMoved (Rook White, Position 'A' 1) xs = xs ++ [(Rook White, Position 'A' 1)]
+addRoqueAlreadMoved (Rook White, Position 'H' 1) xs = xs ++ [(Rook White, Position 'H' 1)]
+addRoqueAlreadMoved _ xs = xs
+
+--Valida se nao existe alguma peça olhando para o caminho do roque
+roqueCheck :: Board -> Position -> Position -> Bool
+roqueCheck board (Position char1 y1) (Position char2 y2) 
+    = char1 == 'E' && (piece == King White || piece == King Black ) &&
+        case cor of
+            White -> y1 == 1 && y2 == 1 && pieceDestino == Rook White &&
+                case char2 of
+                    'A' ->  isRoque([ x | x <- meioRoqueBrancoGrande, isCheck(whichGiveCheck board x (allPlayerPiecesPositions board Black))])
+                    'H' ->  isRoque([ x | x <- meioRoqueBrancoGrande, isCheck(whichGiveCheck board x (allPlayerPiecesPositions board Black))])
+            Black -> y1 == 8 && y2 == 8 && pieceDestino == Rook Black &&
+                case char2 of
+                    'A' ->  isRoque([ x | x <- meioRoqueBrancoGrande, isCheck(whichGiveCheck board x (allPlayerPiecesPositions board Black))])
+                    'H' ->  isRoque([ x | x <- meioRoqueBrancoGrande, isCheck(whichGiveCheck board x (allPlayerPiecesPositions board Black))])
+    where
+        x1 = converteColunaEmInt char1
+        x2 = converteColunaEmInt char2
+        piece = getPiece $ getSquare board (Position char1 y1)
+        cor = getCor piece
+        pieceDestino = getPiece $ getSquare board (Position char2 y2)
+        meioRoqueBrancoGrande = [
+            Position 'B' 1,
+            Position 'C' 1,
+            Position 'D' 1,
+            Position 'E' 1
+            ]
+        meioRoqueBrancoCurto = [
+            Position 'E' 1,
+            Position 'F' 1,
+            Position 'G' 1
+            ]
+        meioRoquePretoGrande = [
+            Position 'B' 8,
+            Position 'C' 8,
+            Position 'D' 8,
+            Position 'E' 8
+            ]
+        meioRoquePretoCurto = [
+            Position 'E' 8,
+            Position 'F' 8,
+            Position 'G' 8
+            ]
 
 validPositions :: String -> Int -> Bool
 validPositions "" i = True
@@ -118,8 +219,11 @@ validaMexerPropriaPeca player board p1
   where
     cor = getCor $ getPiece $ getSquare board p1
 
-validaInputPromocao :: String -> Bool
-validaInputPromocao _ = True
+validaInputPromocao :: Char -> Bool
+validaInputPromocao 'Q' = True
+validaInputPromocao 'N' = True
+validaInputPromocao 'B' = True
+validaInputPromocao _ = False
 
 atualizaBoardComPromocao :: Board -> Position -> Piece -> Board
 atualizaBoardComPromocao board (Position charr y) peca = 
@@ -133,66 +237,121 @@ atualizaBoardComPromocao board (Position charr y) peca =
       novaLinha = [linhaParaAlterar !! i | i <- [0 .. converteColunaEmInt charr - 2] ]
                   ++ [Occupied peca] ++ [linhaParaAlterar !! i | i <- [converteColunaEmInt charr .. 7] ]
 
-playGame :: Int -> Bool -> Player -> Board -> IO ()
-playGame turn on player board =
+positionToInput :: Position -> Position -> String
+positionToInput (Position x y) (Position x1 y1) = [x] ++ show y ++ [x1] ++ show y1
+
+-- Retorna se todos os movimentos que saem do check
+runOutcheckMate :: Board -> Player -> [(Position, (Position, Piece))] -> [(Piece, String)]
+runOutcheckMate _ _ [] = []
+runOutcheckMate board player allMovies = [ (snd (snd x), (positionToInput  (fst (snd x)) (fst x))) | x <- allMovies, not (check (movePiece board (positionToInput  (fst (snd x)) (fst x))) player)]
+
+checkMate :: Board -> Player -> Bool
+checkMate board player  = isCheckMate (runOutcheckMate board player (allMoviesFromUser board (allPlayerPiecesPositions board (playerColor player))) )
+
+isCheckMate :: [(Piece, String)] -> Bool
+isCheckMate [] = True
+isCheckMate positions = False
+
+-- Retorna todo od movimentos validos do usuário
+allMoviesFromUser :: Board -> [(Position,  Piece)] -> [(Position, (Position,  Piece))]
+allMoviesFromUser _ [] = []
+allMoviesFromUser board (x0:xs) = allMoviesFromPiece board x0 ++ allMoviesFromUser board xs
+
+-- Todos os movimentos validos de uma peça
+allMoviesFromPiece :: Board -> (Position,  Piece) -> [(Position, (Position,  Piece))]
+allMoviesFromPiece board (position, piece)  = [ (x, (position, piece)) | x <- geraMovimentos piece position, validaMovimento piece position x 
+                                                                                                            && validaInterposicao board position x
+                                                                                                            &&  validaComerPropriaPeca board position x]
+
+check :: Board -> Player -> Bool
+check board player = isCheck (whichGiveCheck board (whereIsKing board  (playerColor player)) (allPlayerPiecesPositions board (playerColor (nextPlayer player))))
+
+printCheck :: Bool -> IO()
+printCheck True = print "Voce esta em check"
+printCheck False = putStrLn "Voce nao esta em check"
+
+printCheckMate :: Player -> IO()
+printCheckMate Player1 = putStrLn "Player 2 Ganhou"
+printCheckMate Player2 = putStrLn "Player 1 Ganhou"
+
+playGame :: Int -> Bool -> Player -> Board -> [(Piece, Position)] -> IO ()
+playGame turn on player board roqueList = 
   if on
-    then do
-      renderBoard board
-      print player
-      userInput <- getLine
-      let p1 = (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1)))
-      let p2 = (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
-      if (not (length userInput == 4 && validPositions userInput 0 && not (isEmptySquare board userInput)) --jogador e movimentar para a mesma casa
-        || not (validaMovimento (whichPiece (returnSquare board userInput)) p1 p2)) 
-        && not (ehRoque board p1 p2)
-          then do
-            putStrLn "movivento invalido"
-            playGame turn on player board
-            --    
+    then 
+      if checkMate board player
+        then do
+          printCheckMate player
+          playGame turn False player board roqueList
       else do
-        if ehRoque board p1 p2 || (validaInterposicao board p1 p2 
-            && validaComerPropriaPeca board p1 p2 
-            && validaCasosEspeciais board p1 p2)
-            && validaMexerPropriaPeca player board p1
-          then
-            if ehRoque board p1 p2
-              then case p2 of
-                Position 'A' 1 -> do
-                                    let board1 = movePiece board "A1D1"
-                                    let board2 = movePiece board1 "E1C1"
-                                    playGame (turn + 1) on (nextPlayer player) board2
-                Position 'H' 1 -> do
-                                    let board1 = movePiece board "H1F1"
-                                    let board2 = movePiece board1 "E1G1"
-                                    playGame (turn + 1) on (nextPlayer player) board2
-                Position 'A' 8 -> do
-                                    let board1 = movePiece board "A8D8"
-                                    let board2 = movePiece board1 "E8C8"
-                                    playGame (turn + 1) on (nextPlayer player) board2
-                Position 'H' 8 -> do
-                                    let board1 = movePiece board "H8F8"
-                                    let board2 = movePiece board1 "E8G8"
-                                    playGame (turn + 1) on (nextPlayer player) board2
-            else
-              if ehPromocao board p1 p2
+            renderBoard board
+            printCheck (check board player)
+            print player
+            userInput <- getLine
+            let p1 = (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1)))
+            let p2 = (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
+            if (not (length userInput == 4) || not(validPositions userInput 0) || isEmptySquare board userInput) --jogador e movimentar para a mesma casa
+              || (not (validaMovimento (whichPiece (returnSquare board userInput)) p1 p2) 
+              && not (ehRoque board p1 p2))
                 then do
-                        putStrLn "Promote to which piece? ('B' -> Bishop | 'N' -> Knight | 'Q' -> Queen)"
-                        inputPromocao <- getLine
-                        if validaInputPromocao inputPromocao
-                          then case inputPromocao of
-                                  "N" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Knight $ playerColor player)) 
-                                  "B" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Bishop $ playerColor player)) 
-                                  "Q" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Queen $ playerColor player)) 
-                        else do
-                                putStrLn "InputInvaldido!"
-                                playGame turn on player board
-              else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput)  
-        else do
-            print "Movimento Invalido!!"
-            playGame turn on player board
+                  putStrLn "movivento invalido"
+                  playGame turn on player board roqueList
+                  --    
+            else
+              if check (movePiece board userInput) player
+                then do
+                    putStrLn ""
+                    putStrLn "movivento invalido - ainda em check, tente um dos movimentos abaixo: "
+                    putStrLn ""
+                    print (runOutcheckMate board player (allMoviesFromUser board (allPlayerPiecesPositions board (playerColor player))))
+                    playGame turn on player board roqueList
+                else
+                    if (ehRoque board p1 p2 && roqueCheck board p1 p2 && roqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList 
+                      && roqueAlreadMoved (whichPiece (returnSquare board ([userInput!!2] ++ [userInput!!3])), p2) roqueList)
+                      || (validaInterposicao board p1 p2 
+                      && validaComerPropriaPeca board p1 p2 
+                      && validaCasosEspeciais board p1 p2)
+                      && validaMexerPropriaPeca player board p1
+                      then
+                        if ehRoque board p1 p2 && roqueCheck board p1 p2 && 
+                          roqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList && 
+                          roqueAlreadMoved (whichPiece (returnSquare board ([userInput!!2] ++ [userInput!!3])), p2) roqueList
+                          then case p2 of
+                            Position 'A' 1 -> do
+                                          let board1 = movePiece board "A1D1"
+                                          let board2 = movePiece board1 "E1C1"
+                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                            Position 'H' 1 -> do
+                                          let board1 = movePiece board "H1F1"
+                                          let board2 = movePiece board1 "E1G1"
+                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                            Position 'A' 8 -> do
+                                          let board1 = movePiece board "A8D8"
+                                          let board2 = movePiece board1 "E8C8"
+                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                            Position 'H' 8 -> do
+                                          let board1 = movePiece board "H8F8"
+                                          let board2 = movePiece board1 "E8G8"
+                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                        else
+                          if ehPromocao board p1 p2
+                            then do
+                              putStrLn "Promote to which piece? ('B' -> Bishop | 'N' -> Knight | 'Q' -> Queen)"
+                              inputPromocao <- getLine
+                              if length inputPromocao == 1 && validaInputPromocao (toUpper (inputPromocao!!0))
+                                then case inputPromocao of
+                                        "N" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Knight $ playerColor player)) roqueList
+                                        "B" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Bishop $ playerColor player)) roqueList
+                                        "Q" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Queen $ playerColor player)) roqueList
+                              else do
+                                      putStrLn "InputInvaldido!"
+                                      playGame turn on player board roqueList
+                          else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput) (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                    else do
+                      print "Movimento Invalido!!"
+                      playGame turn on player board roqueList
   else
     putStrLn "Game Over"
   
 someFunc :: IO ()
-someFunc = playGame 1 True Player1 initialBoard
+someFunc = playGame 1 True Player1 initialBoard []
 
