@@ -16,6 +16,7 @@ qPreto = Queen Black
 kBranco = King White
 kPreto = King Black
 
+
 main :: IO ()
 main = do
     defaultMain tests
