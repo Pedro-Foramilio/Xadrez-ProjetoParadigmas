@@ -1,7 +1,7 @@
 module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
     ,validaMovimento, getSquare, getPiece, getCor, geraCaminho, validaInterposicao, 
      validaComerPropriaPeca, validaCasosEspeciais, ehRoque, ehPromocao, geraMovimentos,
-     converteColunaEmInt, converteIntEmColuna, geraMovimentos, isInBoard) where
+     converteColunaEmInt, converteIntEmColuna, isInBoard, verifyColorSquare, whereIsKing) where
 
 import Prelude
 
@@ -55,6 +55,16 @@ getCor (Knight c) = c
 getCor (Rook c)   = c
 getCor (Queen c)  = c
 getCor (King c)   = c
+
+ -- Verifica se a peça que está no quadrado é da cor correspondente
+verifyColorSquare :: Piece -> Color -> Bool
+verifyColorSquare (Queen colorPiece) color =  colorPiece == color
+verifyColorSquare (King colorPiece) color =  colorPiece == color
+verifyColorSquare (Rook colorPiece) color =  colorPiece == color
+verifyColorSquare (Bishop colorPiece) color =  colorPiece == color
+verifyColorSquare (Knight colorPiece) color =  colorPiece == color
+verifyColorSquare (Pawn colorPiece) color =  colorPiece == color
+
 
 geraMovimentos :: Piece -> Position -> [Position]
 geraMovimentos (Pawn cor)   p = geraMovimentosPeao p cor
@@ -307,3 +317,8 @@ ehPromocao board (Position char1 y1) (Position char2 y2)
     where
         piece = getPiece $ getSquare board (Position char1 y1)
         quadradoDestino = getSquare board (Position char2 y2)
+
+--Encontra o rei de uma certa cor
+whereIsKing :: Board -> Color -> Position
+whereIsKing board color = head [Position (converteIntEmColuna(y + 1))  (8 - x) | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y == Occupied (King color)]
+

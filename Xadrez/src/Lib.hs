@@ -65,22 +65,22 @@ renderBoard :: Board -> IO ()
 renderBoard board = putStrLn $ unlines $ map renderRow board
   where
     renderSquare :: Square -> [Char]
-    renderSquare Empty                      = " -- "
+    renderSquare Empty                      = " - "
     renderSquare (Occupied piece)     = renderPiece piece
 
     renderPiece :: Piece -> [Char]
-    renderPiece (Queen  White)     = " wq "--" ♛ "
-    renderPiece (King   White)     = " wk "--" ♚ "
-    renderPiece (Rook   White)     = " wr "--" ♜ "
-    renderPiece (Bishop White)     = " wb "--" ♝ "
-    renderPiece (Knight White)     = " wn "--" ♞ "
-    renderPiece (Pawn   White)     = " wp "--" ♟ "
-    renderPiece (King   Black)     = " bk "--" ♔ "
-    renderPiece (Queen  Black)     = " bq "--" ♕ "
-    renderPiece (Rook   Black)     = " br "--" ♖ "
-    renderPiece (Bishop Black)     = " bb "--" ♗ "
-    renderPiece (Knight Black)     = " bn "--" ♘ "
-    renderPiece (Pawn   Black)     = " bp "--" ♙ "
+    renderPiece (Queen  White)     = " ♛ "
+    renderPiece (King   White)     = " ♚ "
+    renderPiece (Rook   White)     = " ♜ "
+    renderPiece (Bishop White)     = " ♝ "
+    renderPiece (Knight White)     = " ♞ "
+    renderPiece (Pawn   White)     = " ♟ "
+    renderPiece (King   Black)     = " ♔ "
+    renderPiece (Queen  Black)     = " ♕ "
+    renderPiece (Rook   Black)     = " ♖ "
+    renderPiece (Bishop Black)     = " ♗ "
+    renderPiece (Knight Black)     = " ♘ "
+    renderPiece (Pawn   Black)     = " ♙ "
 
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
@@ -89,19 +89,6 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
 allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
 allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(y + 1))  (8 - x), whichPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y /= Empty && verifyColorSquare (whichPiece (board!!x!!y)) color]
 
- -- Verifica se a peça que está no quadrado é da cor correspondente
-verifyColorSquare :: Piece -> Color -> Bool
-verifyColorSquare (Queen colorPiece) color =  colorPiece == color
-verifyColorSquare (King colorPiece) color =  colorPiece == color
-verifyColorSquare (Rook colorPiece) color =  colorPiece == color
-verifyColorSquare (Bishop colorPiece) color =  colorPiece == color
-verifyColorSquare (Knight colorPiece) color =  colorPiece == color
-verifyColorSquare (Pawn colorPiece) color =  colorPiece == color
-
-
---Encontra o rei de uma certa cor
-whereIsKing :: Board -> Color -> Position
-whereIsKing board color = head [Position (converteIntEmColuna(y + 1))  (8 - x) | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y == Occupied (King color)]
 
 --isCheck :: Board -> String -> Player ->Bool
 --isCheck board userInput player = validaMovimento (whichPiece (returnSquare board userInput)) 

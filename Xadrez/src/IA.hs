@@ -6,7 +6,7 @@ gerarMovimentoPretas :: Board -> (Position, Position)
 gerarMovimentoPretas board = (\(piece, p, ps) -> (p, head ps)) pecaDeMenorValor 
     where
         pecasAtuais = getPecasAtuais board Black
-        movimentosPossiveis = geraMovimentosParaPecas board pecasAtuais
+        movimentosPossiveis = geraMovimentosParaPecasPretas board pecasAtuais
         pecasQueAlcancamMaiorPeso = maiorPesoAlcansavelAbsoluto movimentosPossiveis
         primeiraPecaQueAlcancaMaiorPeso = head pecasQueAlcancamMaiorPeso
         (peca, _, _) = primeiraPecaQueAlcancaMaiorPeso
@@ -48,14 +48,14 @@ getPecasAtuais board color
 calculaPontuacaoPeca :: (Piece, Position) -> (Float, Float)
 calculaPontuacaoPeca (peca, posicao) = ( converterPecaEmPontos peca, calculaPesoPosicao posicao)
 
-geraMovimentosParaPecas :: Board -> [(Piece, Position)] -> [(Piece, Position, [Position])]
-geraMovimentosParaPecas board [] = []
-geraMovimentosParaPecas board (x:xs) = (peca, pos, movimentosPossiveis) : geraMovimentosParaPecas board xs
+geraMovimentosParaPecasPretas :: Board -> [(Piece, Position)] -> [(Piece, Position, [Position])]
+geraMovimentosParaPecasPretas board [] = []
+geraMovimentosParaPecasPretas board (x:xs) = (peca, pos, movimentosPossiveis) : geraMovimentosParaPecasPretas board xs
     where
         peca = fst x
         pos  = snd x
         movimentosTotais = geraMovimentos peca pos
-        movimentosPossiveis = filter (\x -> isInBoard x && validaInterposicao board pos x) movimentosTotais
+        movimentosPossiveis = filter (\x -> isInBoard x && validaInterposicao board pos x && not (verificaSeEstaEmCheque board (whereIsKing board Black))) movimentosTotais
 
 retornaPosicaoMaiorPeso :: [Position] -> [Position]
 retornaPosicaoMaiorPeso ps = [x | x <- ps, calculaPesoPosicao x == pesoMaximo]
@@ -85,3 +85,16 @@ pecasDeMenorValor (x:xs) p
     | otherwise = pecasDeMenorValor xs p
     where
         (x', _, _) = x
+
+whichGiveCheck :: Board -> Position -> [(Position, Piece)] -> [Piece]
+whichGiveCheck board kingPos otherPlayerPieces = [ snd x  | x <- otherPlayerPieces, validaMovimento (snd x) (fst x) kingPos && validaInterposicao board (fst x) kingPos && validaComerPropriaPeca board (fst x) kingPos ]
+
+isCheck :: [Piece] -> Bool
+isCheck [] = False
+isCheck pieces = True
+
+allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
+allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(y + 1))  (8 - x), getPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y /= Empty && verifyColorSquare (getPiece (board!!x!!y)) color]
+
+verificaSeEstaEmCheque :: Board -> Position -> Bool
+verificaSeEstaEmCheque board x = isCheck(whichGiveCheck board x (allPlayerPiecesPositions board Black))
