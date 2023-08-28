@@ -2,16 +2,22 @@ module IA(gerarMovimentoPretas) where
 
 import TiposBase
 
+
 gerarMovimentoPretas :: Board -> IO String
 gerarMovimentoPretas board = do
         let pecasAtuais = getPecasAtuais board Black
-        let movimentosPossiveis = geraMovimentosParaPecasPretas board pecasAtuais
-        let pecasQueAlcancamMaiorPeso = maiorPesoAlcansavelAbsoluto movimentosPossiveis
-        let primeiraPecaQueAlcancaMaiorPeso = head pecasQueAlcancamMaiorPeso
-        let (peca, _, _) = primeiraPecaQueAlcancaMaiorPeso
-        let pecaDeMenorValor = last $ pecasDeMenorValor pecasQueAlcancamMaiorPeso peca
-        let (Position char1 y1, Position char2 y2) = (\(piece, p, ps) -> (p, head ps)) pecaDeMenorValor 
-        return $ [char1] ++ show y1 ++ [char2] ++ show y2
+        if check board Player2
+            then do
+                let movimentosPossiveis = runOutcheckMate board Player2 (allMoviesFromUser board (allPlayerPiecesPositions board Black))
+                return $ snd $ head movimentosPossiveis
+        else do
+            let movimentosPossiveis = geraMovimentosParaPecasPretas board pecasAtuais
+            let pecasQueAlcancamMaiorPeso = maiorPesoAlcansavelAbsoluto movimentosPossiveis
+            let primeiraPecaQueAlcancaMaiorPeso = head pecasQueAlcancamMaiorPeso
+            let (peca, _, _) = primeiraPecaQueAlcancaMaiorPeso
+            let pecaDeMenorValor = last $ pecasDeMenorValor pecasQueAlcancamMaiorPeso peca
+            let (Position char1 y1, Position char2 y2) = (\(piece, p, ps) -> (p, head ps)) pecaDeMenorValor 
+            return $ [char1] ++ show y1 ++ [char2] ++ show y2
 
 converterPecaEmPontos :: Piece -> Float
 converterPecaEmPontos (King   _) = 100
@@ -87,15 +93,6 @@ pecasDeMenorValor (x:xs) p
     where
         (x', _, _) = x
 
-whichGiveCheck :: Board -> Position -> [(Position, Piece)] -> [Piece]
-whichGiveCheck board kingPos otherPlayerPieces = [ snd x  | x <- otherPlayerPieces, validaMovimento (snd x) (fst x) kingPos && validaInterposicao board (fst x) kingPos && validaComerPropriaPeca board (fst x) kingPos ]
-
-isCheck :: [Piece] -> Bool
-isCheck [] = False
-isCheck pieces = True
-
-allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
-allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(y + 1))  (8 - x), getPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y /= Empty && verifyColorSquare (getPiece (board!!x!!y)) color]
 
 verificaSeEstaEmCheque :: Board -> Position -> Bool
 verificaSeEstaEmCheque board x = isCheck(whichGiveCheck board x (allPlayerPiecesPositions board Black))

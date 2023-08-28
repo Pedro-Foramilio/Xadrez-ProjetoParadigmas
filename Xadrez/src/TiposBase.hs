@@ -1,15 +1,17 @@
-module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..)
+module TiposBase( Piece(..), Color(..), Square(..), Board(..), Position(..), Player(..)
     ,validaMovimento, getSquare, getPiece, getCor, geraCaminho, validaInterposicao, 
      validaComerPropriaPeca, validaCasosEspeciais, ehRoque, ehPromocao, geraMovimentos,
-     converteColunaEmInt, converteIntEmColuna, isInBoard, verifyColorSquare, whereIsKing) where
+     converteColunaEmInt, converteIntEmColuna, isInBoard, verifyColorSquare, whereIsKing,
+     positionToInput, runOutcheckMate, check, movePiece, isCheck, whichGiveCheck,
+     playerColor, allPlayerPiecesPositions, nextPlayer, returnSquare, allMoviesFromUser, allMoviesFromPiece) where
 
 import Prelude
+import Data.Char
+    ( ord, digitToInt, chr, isAlpha, isDigit, toUpper )
 
-data PieceState = Piece Bool
-
+data Player = Player1 | Player2 deriving(Eq, Show)
 data Piece = King Color | Queen Color | Rook Color
             | Bishop Color | Knight Color | Pawn Color deriving (Eq, Show)
-
 data Color = Black | White deriving (Eq, Show)
 data Position = Position Char Int deriving (Eq, Show)
 data Square = Empty | Occupied Piece deriving (Eq, Show)
@@ -36,6 +38,22 @@ converteIntEmColuna 6 = 'F'
 converteIntEmColuna 7 = 'G'
 converteIntEmColuna 8 = 'H'
 converteIntEmColuna _ = '-'
+
+nextPlayer :: Player -> Player
+nextPlayer player | player == Player1 = Player2
+                  | otherwise = Player1
+
+returnSquare :: Board -> String -> Square
+returnSquare bd (x0:x1:str) = bd!!y1!!y0
+                              where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
+                                    y1 = 8 - (digitToInt x1)
+
+playerColor :: Player -> Color
+playerColor Player1 = White
+playerColor Player2 = Black
+
+positionToInput :: Position -> Position -> String
+positionToInput (Position x y) (Position x1 y1) = [x] ++ show y ++ [x1] ++ show y1
 
 isInBoard :: Position -> Bool
 isInBoard (Position i y) =  x >= 1 && x <= 8 && y >= 1 && y <= 8 
@@ -322,3 +340,43 @@ ehPromocao board (Position char1 y1) (Position char2 y2)
 whereIsKing :: Board -> Color -> Position
 whereIsKing board color = head [Position (converteIntEmColuna(y + 1))  (8 - x) | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y == Occupied (King color)]
 
+-- Retorna se todos os movimentos que saem do check
+runOutcheckMate :: Board -> Player -> [(Position, (Position, Piece))] -> [(Piece, String)]
+runOutcheckMate _ _ [] = []
+runOutcheckMate board player allMovies = [ (snd (snd x), (positionToInput  (fst (snd x)) (fst x))) | x <- allMovies, not (check (movePiece board (positionToInput  (fst (snd x)) (fst x))) player)]
+
+check :: Board -> Player -> Bool
+check board player = isCheck (whichGiveCheck board (whereIsKing board  (playerColor player)) (allPlayerPiecesPositions board (playerColor (nextPlayer player))))
+
+movePiece :: Board -> String -> Board
+movePiece board (x0:x1:x2:x3:x4) = [[if x == y3 && y == y2 then returnSquare board (x0:x1:x2:x3:x4) 
+            else if x == y1 && y == y0 then Empty else board!!x!!y |
+            y <- [0..((length (board!!x))-1)]]| x <- [0..((length board) - 1)]]
+  where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
+        y1 = 8 - (digitToInt x1)
+        y2 = (digitToInt (chr ((ord (toUpper x2)) - 17))) 
+        y3 = 8 - (digitToInt x3)
+
+ -- Se tiver alguma peça que pode atacar o rei
+isCheck :: [Piece] -> Bool
+isCheck [] = False
+isCheck pieces = True
+
+--Retorna todas as peças que dao check
+whichGiveCheck :: Board -> Position -> [(Position, Piece)] -> [Piece]
+whichGiveCheck board kingPos otherPlayerPieces = [ snd x  | x <- otherPlayerPieces, validaMovimento (snd x) (fst x) kingPos && validaInterposicao board (fst x) kingPos && validaComerPropriaPeca board (fst x) kingPos ]
+
+--Retorna uma lista de tuplas com a posição e peças de uma das cores
+allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
+allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(y + 1))  (8 - x), getPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y /= Empty && verifyColorSquare (getPiece (board!!x!!y)) color]
+
+-- Retorna todo od movimentos validos do usuário
+allMoviesFromUser :: Board -> [(Position,  Piece)] -> [(Position, (Position,  Piece))]
+allMoviesFromUser _ [] = []
+allMoviesFromUser board (x0:xs) = allMoviesFromPiece board x0 ++ allMoviesFromUser board xs
+
+-- Todos os movimentos validos de uma peça
+allMoviesFromPiece :: Board -> (Position,  Piece) -> [(Position, (Position,  Piece))]
+allMoviesFromPiece board (position, piece)  = [ (x, (position, piece)) | x <- geraMovimentos piece position, validaMovimento piece position x 
+                                                                                                            && validaInterposicao board position x && validaComerPropriaPeca board position x]
+  

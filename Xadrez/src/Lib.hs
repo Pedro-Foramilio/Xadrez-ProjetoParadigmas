@@ -8,28 +8,6 @@ import Data.Char
 import GHC.RTS.Flags (TraceFlags(user))
 
 
-
-
-
-data Player = Player1 | Player2 deriving(Eq, Show)
-type GameStatus = (Bool, Player)
-type GameValue = Player
-
---state :: (s -> (a, s)) -> State s a
---updateState :: Bool -> State GameStatus GameValue
---updateState isStillGoing = do 
---  (on, player) <- get
---  if isStillGoing
---    then 
---      (if player == Player2 
---        then
---          put (isStillGoing, Player1)
---        else
---          put (isStillGoing, Player2))
---    else 
-  --    return player
-
-
 initialBoard :: Board
 initialBoard' =
   [ [ Occupied (Rook Black), Occupied (Knight Black), Occupied (Bishop Black), Occupied (Queen Black), Occupied (King Black), Occupied (Bishop Black), Occupied (Knight Black), Occupied (Rook Black) ]
@@ -51,16 +29,6 @@ initialBoard =
   , [ Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),   Occupied (Pawn White),  Occupied (Pawn White), Occupied (Pawn White),   Occupied (Pawn White),   Occupied (Pawn White) ]
   , [ Occupied (Rook White), Occupied (Knight White), Occupied (Bishop White), Occupied (Queen White), Occupied (King White), Occupied (Bishop White), Occupied (Knight White), Occupied (Rook White) ]
   ]
-
--- 1. Coletar Input do Usuario: devolver Posicao ini Posicao fin
--- 2.1 Validar o movimento da peca (origem x destino)
--- 2.2 Validar Excecoes (ROque, Cheque, Cheque Mate, En Passan)
--- 3.1 Atualizar o tabuleiro de acordo
--- 3.2 Retornar erro e pedir input novamente -> 2.
--- 4. Atualizar estado para sinalizar movimento do proximo jogador
-
-
-
 
 renderBoard :: Board -> IO ()
 renderBoard board = putStrLn $ unlines $ map renderRow board
@@ -86,60 +54,18 @@ renderBoard board = putStrLn $ unlines $ map renderRow board
     renderRow :: [Square] -> [Char]
     renderRow = concatMap renderSquare
 
---Retorna uma lista de tuplas com a posição e peças de uma das cores
-allPlayerPiecesPositions :: Board -> Color -> [(Position,  Piece)]
-allPlayerPiecesPositions board color = [(Position (converteIntEmColuna(y + 1))  (8 - x), whichPiece (board!!x!!y))  | x <- [0..((length board) - 1)], y <- [0..((length (board!!x))-1)], board!!x!!y /= Empty && verifyColorSquare (whichPiece (board!!x!!y)) color]
-
-
---isCheck :: Board -> String -> Player ->Bool
---isCheck board userInput player = validaMovimento (whichPiece (returnSquare board userInput)) 
---                             (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
---                              (whereIsKing board (playerColor (nextPlayer player)))
-
-returnSquare :: Board -> String -> Square
-returnSquare bd (x0:x1:str) = bd!!y1!!y0
-                              where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
-                                    y1 = 8 - (digitToInt x1)
-
 isEmptySquare :: Board -> String -> Bool
 isEmptySquare bd (x0:x1:str) = bd!!y1!!y0 == Empty
                                where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
                                      y1 = 8 - (digitToInt x1)
 
-nextPlayer :: Player -> Player
-nextPlayer player | player == Player1 = Player2
-                  | otherwise = Player1
-
-playerColor :: Player -> Color
-playerColor Player1 = White
-playerColor Player2 = Black
-
 whichPiece :: Square -> Piece
 whichPiece (Occupied piece) = piece
-
-movePiece :: Board -> String -> Board
-movePiece board (x0:x1:x2:x3:x4) = [[if x == y3 && y == y2 then returnSquare board (x0:x1:x2:x3:x4) 
-            else if x == y1 && y == y0 then Empty else board!!x!!y |
-            y <- [0..((length (board!!x))-1)]]| x <- [0..((length board) - 1)]]
-  where y0 = (digitToInt (chr ((ord (toUpper x0)) - 17)))
-        y1 = 8 - (digitToInt x1)
-        y2 = (digitToInt (chr ((ord (toUpper x2)) - 17))) 
-        y3 = 8 - (digitToInt x3)
-
---Retorna todas as peças que dao check
-whichGiveCheck :: Board -> Position -> [(Position, Piece)] -> [Piece]
-whichGiveCheck board kingPos otherPlayerPieces = [ snd x  | x <- otherPlayerPieces, validaMovimento (snd x) (fst x) kingPos && validaInterposicao board (fst x) kingPos && validaComerPropriaPeca board (fst x) kingPos ]
-
- -- Se tiver alguma peça que pode atacar o rei
-isCheck :: [Piece] -> Bool
-isCheck [] = False
-isCheck pieces = True
 
 --Verifica se a lista de posicoes se está vazia
 isRoque :: [a] -> Bool
 isRoque [] = True
 isRoque pieces = False
-
 
 roqueAlreadMoved :: (Piece, Position) -> [(Piece, Position)] -> Bool
 roqueAlreadMoved p xs = isRoque([x | x <- xs, x == p])
@@ -225,34 +151,12 @@ atualizaBoardComPromocao board (Position charr y) peca =
       novaLinha = [linhaParaAlterar !! i | i <- [0 .. converteColunaEmInt charr - 2] ]
                   ++ [Occupied peca] ++ [linhaParaAlterar !! i | i <- [converteColunaEmInt charr .. 7] ]
 
-positionToInput :: Position -> Position -> String
-positionToInput (Position x y) (Position x1 y1) = [x] ++ show y ++ [x1] ++ show y1
-
--- Retorna se todos os movimentos que saem do check
-runOutcheckMate :: Board -> Player -> [(Position, (Position, Piece))] -> [(Piece, String)]
-runOutcheckMate _ _ [] = []
-runOutcheckMate board player allMovies = [ (snd (snd x), (positionToInput  (fst (snd x)) (fst x))) | x <- allMovies, not (check (movePiece board (positionToInput  (fst (snd x)) (fst x))) player)]
-
 checkMate :: Board -> Player -> Bool
 checkMate board player  = isCheckMate (runOutcheckMate board player (allMoviesFromUser board (allPlayerPiecesPositions board (playerColor player))) )
 
 isCheckMate :: [(Piece, String)] -> Bool
 isCheckMate [] = True
 isCheckMate positions = False
-
--- Retorna todo od movimentos validos do usuário
-allMoviesFromUser :: Board -> [(Position,  Piece)] -> [(Position, (Position,  Piece))]
-allMoviesFromUser _ [] = []
-allMoviesFromUser board (x0:xs) = allMoviesFromPiece board x0 ++ allMoviesFromUser board xs
-
--- Todos os movimentos validos de uma peça
-allMoviesFromPiece :: Board -> (Position,  Piece) -> [(Position, (Position,  Piece))]
-allMoviesFromPiece board (position, piece)  = [ (x, (position, piece)) | x <- geraMovimentos piece position, validaMovimento piece position x 
-                                                                                                            && validaInterposicao board position x
-                                                                                                            &&  validaComerPropriaPeca board position x]
-
-check :: Board -> Player -> Bool
-check board player = isCheck (whichGiveCheck board (whereIsKing board  (playerColor player)) (allPlayerPiecesPositions board (playerColor (nextPlayer player))))
 
 printCheck :: Bool -> IO()
 printCheck True = print "Voce esta em check"
