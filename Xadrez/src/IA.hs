@@ -2,15 +2,16 @@ module IA(gerarMovimentoPretas) where
 
 import TiposBase
 
-gerarMovimentoPretas :: Board -> (Position, Position)
-gerarMovimentoPretas board = (\(piece, p, ps) -> (p, head ps)) pecaDeMenorValor 
-    where
-        pecasAtuais = getPecasAtuais board Black
-        movimentosPossiveis = geraMovimentosParaPecasPretas board pecasAtuais
-        pecasQueAlcancamMaiorPeso = maiorPesoAlcansavelAbsoluto movimentosPossiveis
-        primeiraPecaQueAlcancaMaiorPeso = head pecasQueAlcancamMaiorPeso
-        (peca, _, _) = primeiraPecaQueAlcancaMaiorPeso
-        pecaDeMenorValor = last $ pecasDeMenorValor pecasQueAlcancamMaiorPeso peca
+gerarMovimentoPretas :: Board -> IO String
+gerarMovimentoPretas board = do
+        let pecasAtuais = getPecasAtuais board Black
+        let movimentosPossiveis = geraMovimentosParaPecasPretas board pecasAtuais
+        let pecasQueAlcancamMaiorPeso = maiorPesoAlcansavelAbsoluto movimentosPossiveis
+        let primeiraPecaQueAlcancaMaiorPeso = head pecasQueAlcancamMaiorPeso
+        let (peca, _, _) = primeiraPecaQueAlcancaMaiorPeso
+        let pecaDeMenorValor = last $ pecasDeMenorValor pecasQueAlcancamMaiorPeso peca
+        let (Position char1 y1, Position char2 y2) = (\(piece, p, ps) -> (p, head ps)) pecaDeMenorValor 
+        return $ [char1] ++ show y1 ++ [char2] ++ show y2
 
 converterPecaEmPontos :: Piece -> Float
 converterPecaEmPontos (King   _) = 100

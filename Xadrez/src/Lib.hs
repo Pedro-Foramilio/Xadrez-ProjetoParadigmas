@@ -1,6 +1,7 @@
 module Lib ( someFunc ) where
 
 import TiposBase
+import IA
 import Control.Monad.State
 import Data.Char
     ( ord, digitToInt, chr, isAlpha, isDigit, toUpper )
@@ -261,19 +262,19 @@ printCheckMate :: Player -> IO()
 printCheckMate Player1 = putStrLn "Player 2 Ganhou"
 printCheckMate Player2 = putStrLn "Player 1 Ganhou"
 
-playGame :: Int -> Bool -> Player -> Board -> [(Piece, Position)] -> IO ()
-playGame turn on player board roqueList = 
+playGame :: Int -> Bool -> Int -> Player -> Board -> [(Piece, Position)] -> IO ()
+playGame turn on gameType player board roqueList = 
   if on
     then 
       if checkMate board player
         then do
           printCheckMate player
-          playGame turn False player board roqueList
+          playGame turn False gameType player board roqueList
       else do
             renderBoard board
             printCheck (check board player)
             print player
-            userInput <- getLine
+            userInput <- pegaMovimento gameType player board
             let p1 = (Position (toUpper (userInput!!0)) (digitToInt (userInput!!1)))
             let p2 = (Position (toUpper (userInput!!2)) (digitToInt (userInput!!3))) 
             if (not (length userInput == 4) || not(validPositions userInput 0) || isEmptySquare board userInput) --jogador e movimentar para a mesma casa
@@ -281,7 +282,7 @@ playGame turn on player board roqueList =
               && not (ehRoque board p1 p2))
                 then do
                   putStrLn "movivento invalido"
-                  playGame turn on player board roqueList
+                  playGame turn on gameType player board roqueList
                   --    
             else
               if check (movePiece board userInput) player
@@ -290,7 +291,7 @@ playGame turn on player board roqueList =
                     putStrLn "movivento invalido - ainda em check, tente um dos movimentos abaixo: "
                     putStrLn ""
                     print (runOutcheckMate board player (allMoviesFromUser board (allPlayerPiecesPositions board (playerColor player))))
-                    playGame turn on player board roqueList
+                    playGame turn on gameType player board roqueList
                 else
                     if (ehRoque board p1 p2 && roqueCheck board p1 p2 && roqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList 
                       && roqueAlreadMoved (whichPiece (returnSquare board ([userInput!!2] ++ [userInput!!3])), p2) roqueList)
@@ -306,19 +307,19 @@ playGame turn on player board roqueList =
                             Position 'A' 1 -> do
                                           let board1 = movePiece board "A1D1"
                                           let board2 = movePiece board1 "E1C1"
-                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                                          playGame (turn + 1) on gameType (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
                             Position 'H' 1 -> do
                                           let board1 = movePiece board "H1F1"
                                           let board2 = movePiece board1 "E1G1"
-                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                                          playGame (turn + 1) on gameType (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
                             Position 'A' 8 -> do
                                           let board1 = movePiece board "A8D8"
                                           let board2 = movePiece board1 "E8C8"
-                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                                          playGame (turn + 1) on gameType (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
                             Position 'H' 8 -> do
                                           let board1 = movePiece board "H8F8"
                                           let board2 = movePiece board1 "E8G8"
-                                          playGame (turn + 1) on (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                                          playGame (turn + 1) on gameType (nextPlayer player) board2 (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
                         else
                           if ehPromocao board p1 p2
                             then do
@@ -326,19 +327,39 @@ playGame turn on player board roqueList =
                               inputPromocao <- getLine
                               if length inputPromocao == 1 && validaInputPromocao (toUpper (inputPromocao!!0))
                                 then case inputPromocao of
-                                        "N" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Knight $ playerColor player)) roqueList
-                                        "B" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Bishop $ playerColor player)) roqueList
-                                        "Q" -> playGame (turn + 1) on (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Queen $ playerColor player)) roqueList
+                                        "N" -> playGame (turn + 1) on gameType (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Knight $ playerColor player)) roqueList
+                                        "B" -> playGame (turn + 1) on gameType (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Bishop $ playerColor player)) roqueList
+                                        "Q" -> playGame (turn + 1) on gameType (nextPlayer player) (atualizaBoardComPromocao (movePiece board userInput) p2 (Queen $ playerColor player)) roqueList
                               else do
                                       putStrLn "InputInvaldido!"
-                                      playGame turn on player board roqueList
-                          else playGame (turn + 1) on (nextPlayer player) (movePiece board userInput) (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
+                                      playGame turn on gameType player board roqueList
+                          else playGame (turn + 1) on gameType (nextPlayer player) (movePiece board userInput) (addRoqueAlreadMoved (whichPiece (returnSquare board userInput), p1) roqueList)
                     else do
                       print "Movimento Invalido!!"
-                      playGame turn on player board roqueList
+                      playGame turn on gameType player board roqueList
   else
     putStrLn "Game Over"
-  
+
+pegaMovimento :: Int -> Player -> Board -> IO String
+pegaMovimento 1 _ _ = do getLine
+pegaMovimento 2 Player1 _ = do getLine
+pegaMovimento 2 Player2 board = do gerarMovimentoPretas board 
+
+validaGameType :: Char -> Bool
+validaGameType '1' = True
+validaGameType '2' = True
+validaGameType _   = False
+
 someFunc :: IO ()
-someFunc = playGame 1 True Player1 initialBoard []
+someFunc = do
+    putStrLn "Digite 1 para jogar contra um Humano e 2 para jogar contra uma IA"
+    gameType <- getLine
+    if length gameType == 1 && validaGameType (gameType!!0)
+      then case head gameType of
+        '1' -> playGame 1 True 1 Player1 initialBoard []
+        '2' -> playGame 1 True 2 Player1 initialBoard []
+        _ -> error "Invalid game type"
+    else do
+      print "invalido"
+      someFunc
 
