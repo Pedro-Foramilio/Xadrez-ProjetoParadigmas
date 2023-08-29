@@ -11,13 +11,18 @@ gerarMovimentoPretas board = do
                 let movimentosPossiveis = runOutcheckMate board Player2 (allMoviesFromUser board (allPlayerPiecesPositions board Black))
                 return $ snd $ head movimentosPossiveis
         else do
+            let a = runOutcheckMate board Player2 (allMoviesFromUser board (allPlayerPiecesPositions board Black))
             let movimentosPossiveis = geraMovimentosParaPecasPretas board pecasAtuais
             let pecasQueAlcancamMaiorPeso = maiorPesoAlcansavelAbsoluto movimentosPossiveis
             let primeiraPecaQueAlcancaMaiorPeso = head pecasQueAlcancamMaiorPeso
             let (peca, _, _) = primeiraPecaQueAlcancaMaiorPeso
             let pecaDeMenorValor = last $ pecasDeMenorValor pecasQueAlcancamMaiorPeso peca
             let (Position char1 y1, Position char2 y2) = (\(piece, p, ps) -> (p, head ps)) pecaDeMenorValor 
-            return $ [char1] ++ show y1 ++ [char2] ++ show y2
+            let final = [char1] ++ show y1 ++ [char2] ++ show y2
+            if (check (movePiece board final) Player2)
+                then return $ snd $ head a
+            else return final
+
 
 converterPecaEmPontos :: Piece -> Float
 converterPecaEmPontos (King   _) = 100
